@@ -22,6 +22,11 @@ window.TC = {
       nightlyFrom: 1750, minNights: 2, pets: "allowed", rating: 4.94, reviews: 58,
       city: "Dover, Vermont", g1: "#7a4a3a", g2: "#37201a",
       blurb: "9BR · Sleeps 22 · Hot tub · Pool" },
+    { id: "the-fletschhorn", worker: "fletschhorn",
+      name: "The Fletschhorn", bedrooms: 12, guests: 30, baths: 12,
+      nightlyFrom: 390, minNights: 1, pets: "fee", rating: 4.90, reviews: 42,
+      city: "Saas-Fee, Switzerland", g1: "#5f6f7f", g2: "#1d2a33",
+      blurb: "Alpine hotel · Restaurant · Worker-backed test property" },
   ],
 
   PETS_LABEL: { allowed: "Pets welcome", fee: "Pets welcome (fee applies)", no: "No pets" },

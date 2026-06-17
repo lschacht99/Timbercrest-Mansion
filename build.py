@@ -34,6 +34,12 @@ PROPS = [
          title="The Mahogany — 9BR | Sleeps 22 | Hot Tub | Pool | Near Mt. Snow",
          desc="Nine bedrooms — nearly every one with its own bath — for up to 22 guests. Richly appointed interiors, a pool and hot tub, and quintessential New England grounds near Mount Snow.",
          amenities=["Hot tub","Swimming pool","Indoor fireplace","Full kitchen","Wifi","Free parking","Pets allowed","Washer & dryer","Piano","Patio"]),
+    dict(id="the-fletschhorn", name="The Fletschhorn", br=12, sleeps=30, baths=12,
+         price=390, minN=1, pets="fee", rating=4.90, reviews=42, city="Saas-Fee, Switzerland",
+         g1="#5f6f7f", g2="#1d2a33", cluster=False, worker="fletschhorn",
+         title="The Fletschhorn — Alpine Hotel & Restaurant | Saas-Fee",
+         desc="An alpine hotel and restaurant test property connected through the Fletschhorn Worker. Use it to verify live Worker-backed booking requests while keeping the Timbercrest booking flow intact.",
+         amenities=["Alpine restaurant","Mountain views","Breakfast","Wifi","Ski access","Private baths","Concierge","Event dining","Pets by request","Free parking"]),
 ]
 PETS = {"allowed": "Pets welcome", "fee": "Pets welcome (fee applies)", "no": "No pets"}
 CLUSTER_GUESTS = sum(p["sleeps"] for p in PROPS if p["cluster"])  # 72
@@ -78,21 +84,49 @@ def head(title, desc, rel="", jsonld=""):
 
 def header(active, rel=""):
     nav = [("Stays","index.html"),("The concept","concept.html"),("Events & weddings","events.html"),("The area","area.html")]
-    links = "".join(
-        f'<a href="{rel}{href}" class="px-4 py-2 rounded-full transition {"bg-stone-900 text-white" if active==href else "text-stone-600 hover:bg-stone-100"}" style="text-decoration:none">{label}</a>'
-        for label, href in nav)
+    links = "".join(f'<a href="{rel}{href}">{label}</a>' for label, href in nav)
+    compact_label = "Plan a group stay" if active != "index.html" else "Book direct"
     return f'''
-<header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-stone-100">
-  <div class="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
-    <a href="{rel}index.html" class="flex items-center gap-2 shrink-0" style="text-decoration:none">
-      <span class="font-serif text-lg sm:text-xl tracking-wide text-stone-900">Timbercrest <span class="text-stone-400 hidden sm:inline">Mansions</span></span>
+<header class="fs-toolbar" data-fs-toolbar>
+  <div class="fs-toolbar-shell">
+    <a class="fs-toolbar-logo" href="{rel}index.html">
+      Timbercrest
+      <span>Mansions</span>
     </a>
-    <nav class="hidden md:flex items-center gap-1 text-sm">{links}</nav>
-    <div class="hidden md:block">
-      {'<a href="'+rel+'booking.html?event=1" class="btn btn-primary" style="padding:.6rem 1.25rem;border-radius:99px;text-decoration:none">Plan a group stay</a>' if active!="index.html" else '<a href="'+rel+'booking.html" class="btn btn-primary" style="padding:.6rem 1.25rem;border-radius:99px;text-decoration:none">Book now</a>'}
+
+    <button class="fs-toolbar-compact" type="button" data-fs-toolbar-open>
+      <span>{compact_label}</span>
+      <b>Dates · Guests · Book</b>
+    </button>
+
+    <div class="fs-toolbar-panel" data-fs-toolbar-panel>
+      <nav class="fs-toolbar-tabs" aria-label="Toolbar navigation">
+        <button type="button" class="active" data-fs-tab="stay">Stay</button>
+        <button type="button" data-fs-tab="events">Events</button>
+        <button type="button" data-fs-tab="browse">Browse</button>
+      </nav>
+
+      <div class="fs-toolbar-search">
+        <a href="{rel}booking.html" class="fs-toolbar-field">
+          <small>Book</small>
+          <strong>Choose dates</strong>
+        </a>
+        <a href="{rel}booking.html?event=1" class="fs-toolbar-field">
+          <small>Events</small>
+          <strong>Group stays</strong>
+        </a>
+        <a href="{rel}index.html#search-wrap" class="fs-toolbar-field">
+          <small>Browse</small>
+          <strong>Search mansions</strong>
+        </a>
+        <a href="{rel}booking.html" class="fs-toolbar-submit">Check availability</a>
+      </div>
     </div>
-    <a href="{rel}booking.html" class="md:hidden btn btn-primary" style="padding:.5rem 1rem;border-radius:99px;font-size:.85rem;text-decoration:none">Book</a>
+
+    <nav class="fs-toolbar-links">{links}<a href="{rel}booking.html">Booking</a></nav>
   </div>
+
+  <button class="fs-toolbar-backdrop" type="button" aria-label="Close toolbar" data-fs-toolbar-close></button>
 </header>'''
 
 def mobilenav(active, rel=""):
