@@ -12,7 +12,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/styles.css?v=3">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{fontFamily:{serif:["Cormorant Garamond","serif"]}}}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LocalBusiness","name":"Timbercrest Mansions","description":"Luxury Vermont mansion rentals near Mount Snow.","address":{"@type":"PostalAddress","addressLocality":"West Dover","addressRegion":"VT","addressCountry":"US"},"telephone":"+1-802-210-0018","url":"https://timbercrestmansions.com","priceRange":"$$$"}</script>
@@ -45,7 +45,7 @@
     <span class="tcsearch-go" style="pointer-events:none">🔎<span>Search</span></span>
   </button>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-7 sm:gap-6"><a href="stays/the-timbercrest.html" class="block fade" style="text-decoration:none">
+  <div class="home-listings"><a href="stays/the-timbercrest.html" class="block fade" style="text-decoration:none">
   <div class="photo " style="--g1:#3a3f49;--g2:#16181d;aspect-ratio:4/3;border-radius:.9rem" role="img" aria-label="Timbercrest Mansions"></div>
   <div class="mt-3">
     <div class="flex justify-between gap-3">
@@ -82,6 +82,74 @@
     <div class="text-sm text-stone-500">Dover, Vermont · sleeps 22</div>
     <div class="flex items-center gap-2 mt-1"><span class="text-sm"><span class="font-semibold">$1,750</span> <span class="text-stone-500">night</span></span><span style="display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:500;padding:.25rem .6rem;border-radius:99px;background:rgba(146,64,14,.1);color:#92400e">🐾 Pets welcome</span></div>
   </div></a></div>
+
+  <section class="tc-reviews fade">
+    <div class="tc-reviews-hd">
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.25em] font-semibold" style="color:#92400e">Trusted by 500+ guests</p>
+        <h2 class="font-serif text-2xl sm:text-3xl mt-1">What guests are saying</h2>
+      </div>
+      <a href="booking.html" class="btn btn-primary tc-reviews-cta" style="padding:.7rem 1.4rem;text-decoration:none;border-radius:99px;white-space:nowrap">Book direct &amp; save</a>
+    </div>
+    <div class="tc-reviews-grid">
+      <div class="tc-review tc-review--featured">
+        <div class="tc-review-top">
+          <div class="tc-review-avatar" style="--av:#7c3408">M</div>
+          <div>
+            <div class="tc-review-name">Michelle R.</div>
+            <div class="tc-review-meta">The Timbercrest · Airbnb</div>
+          </div>
+          <span class="tc-review-badge tc-badge-airbnb">Airbnb</span>
+        </div>
+        <div class="tc-review-stars">★★★★★</div>
+        <p class="tc-review-text">"<strong>Absolutely stunning — and so much cheaper than booking through Airbnb.</strong> We found the direct site for our second stay and saved nearly $600. Same magnificent house, same incredible team, no platform fees. This is how luxury travel should work."</p>
+        <div class="tc-review-date">January 2025</div>
+      </div>
+      <div class="tc-review">
+        <div class="tc-review-top">
+          <div class="tc-review-avatar" style="--av:#1d4ed8">J</div>
+          <div>
+            <div class="tc-review-name">James &amp; Family</div>
+            <div class="tc-review-meta">The Birch · VRBO</div>
+          </div>
+          <span class="tc-review-badge tc-badge-vrbo">VRBO</span>
+        </div>
+        <div class="tc-review-stars">★★★★★</div>
+        <p class="tc-review-text">"We rented The Birch for Thanksgiving — 28 people, three generations. The kitchen is enormous, the hot tub fits everyone, and the team was reachable the entire weekend. Already planning to book direct next year for the better rate."</p>
+        <div class="tc-review-date">November 2024</div>
+      </div>
+      <div class="tc-review">
+        <div class="tc-review-top">
+          <div class="tc-review-avatar" style="--av:#065f46">S</div>
+          <div>
+            <div class="tc-review-name">Sarah T.</div>
+            <div class="tc-review-meta">The Myrtle · Google</div>
+          </div>
+          <span class="tc-review-badge tc-badge-google">Google</span>
+        </div>
+        <div class="tc-review-stars">★★★★★</div>
+        <p class="tc-review-text">"Best ski weekend of our lives. Twenty minutes from Mount Snow, private game room, pool table and a fireplace the size of a small car. We'll be back every winter. Book here — the team is amazing and rates are unbeatable."</p>
+        <div class="tc-review-date">March 2025</div>
+      </div>
+      <div class="tc-review">
+        <div class="tc-review-top">
+          <div class="tc-review-avatar" style="--av:#4f46e5">D</div>
+          <div>
+            <div class="tc-review-name">David &amp; Claire</div>
+            <div class="tc-review-meta">The Mahogany · Airbnb</div>
+          </div>
+          <span class="tc-review-badge tc-badge-airbnb">Airbnb</span>
+        </div>
+        <div class="tc-review-stars">★★★★★</div>
+        <p class="tc-review-text">"Our wedding weekend here was everything we dreamed of. The team coordinated everything — caterers, florals, timing — without us lifting a finger. We had 55 guests across two properties and it felt effortless. Worth every penny and more."</p>
+        <div class="tc-review-date">September 2024</div>
+      </div>
+    </div>
+    <div class="tc-reviews-footer">
+      <span>4.95 average across 279 reviews on Airbnb, VRBO &amp; Google</span>
+      <a href="booking.html" style="text-decoration:none;color:#92400e;font-weight:600">Book direct for the best price →</a>
+    </div>
+  </section>
 
   <section class="rounded-xl overflow-hidden relative p-6 sm:p-10 text-white fade" style="background:linear-gradient(120deg,#16181d,#44403c 55%,#54687a)">
     <p class="text-[11px] uppercase tracking-[0.25em] text-white/60 font-semibold">More than 48 guests?</p>
@@ -123,4 +191,4 @@
   <span class="sm:ml-auto">Best rates guaranteed when booking direct</span>
 </footer>
 <nav class="bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-stone-200 grid grid-cols-5 text-[10px]"><a href="index.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-900 font-semibold" style="text-decoration:none">Stays</a><a href="concept.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-500" style="text-decoration:none">Concept</a><a href="events.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-500" style="text-decoration:none">Events</a><a href="area.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-500" style="text-decoration:none">Area</a><a href="booking.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-500" style="text-decoration:none">Booking</a></nav>
-<script src="assets/data.js"></script><script src="assets/site.js"></script></body></html>
+<script src="assets/data.js"></script><script src="assets/site.js?v=3"></script></body></html>

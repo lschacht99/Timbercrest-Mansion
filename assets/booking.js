@@ -10,7 +10,7 @@
   const params = new URLSearchParams(location.search);
   const state = {
     ids: (params.get("ids") || D.PROPERTIES[0].id).split(",").filter(Boolean),
-    isEvent: params.get("event") === "1",
+    isEvent: false,
     checkIn: "", checkOut: "",
     adults: 2, children: 0, pets: 0,
     email: "", eventType: "Wedding", message: "",
@@ -36,7 +36,7 @@
     root.innerHTML = `
       <a href="index.html" class="inline-flex items-center gap-2 text-sm py-3" style="text-decoration:none">&larr; Back</a>
       <h1 class="font-serif" style="font-size:2rem;margin:.2rem 0">${state.isEvent ? "Plan your celebration" : "Confirm and book"}</h1>
-      ${state.isEvent ? `<p style="color:#57534e;font-size:.95rem;max-width:40rem">One house for an intimate weekend — or two or three side-by-side mansions so every grandparent, cousin and college friend wakes up on the same hillside.</p>` : ""}
+      ${state.isEvent ? `<p style="color:#57534e;font-size:.95rem;max-width:40rem">One house for an intimate weekend — or all four side-by-side mansions, so every guest wakes up on the same hillside.</p>` : ""}
       <div class="bk-grid">
         <div>
           <section class="bk-sec">
@@ -85,7 +85,10 @@
             </div>
             <textarea id="msg" rows="4" placeholder="A September wedding for 60 — ceremony in the garden, dinner in the barn, families staying the whole weekend…">${state.message}</textarea>
           </section>` : `
-          ${state.ids.length > 1 ? `<button class="bk-upsell" data-makeevent="1">Planning a wedding or celebration across these houses? <u>Tell us about it &rarr;</u></button>` : ""}
+          <div class="bk-nearby-nudge">
+            <span>More guests?</span> The Myrtle, Birch &amp; Mahogany sit side by side —
+            <a href="events.html">rent a property nearby &rarr;</a>
+          </div>
           `}
         </div>
 
