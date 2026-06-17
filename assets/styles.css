@@ -145,6 +145,33 @@ header.nav-scrolled .tcsearch-seg .compact { display: block; font-size: .8rem; f
 @media (max-width: 860px) {
   .tcsearch-wrap { display: none; }
 }
+
+/* ============================================================
+   Home listings — grid on desktop, peek-a-boo carousel on phones
+   ============================================================ */
+.home-listings {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+@media (max-width: 1279px) { .home-listings { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 639px) {
+  .home-listings {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 1rem;
+    margin-inline: -1rem;   /* bleed past the page's 1rem side padding */
+    padding-inline: 1rem;   /* so the first card stays inset, next one peeks */
+    scrollbar-width: none;
+  }
+  .home-listings::-webkit-scrollbar { display: none; }
+  .home-listings > a {
+    flex: 0 0 82%;          /* one card + a peek of the next */
+    scroll-snap-align: start;
+  }
+}
 body {
   margin: 0;
   font-family: "Inter", system-ui, -apple-system, sans-serif;
