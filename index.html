@@ -36,13 +36,14 @@
     <h1 class="font-serif text-3xl sm:text-5xl mt-1">Luxury Vermont mansion rentals near Mount Snow</h1>
   </div>
 
-  <div id="search-wrap" class="relative max-w-2xl">
-    <div class="flex items-center gap-3 bg-white border border-stone-200 rounded-full px-5 h-14 shadow-md">
-      <span>🔎</span>
-      <input id="usearch" autocomplete="off" placeholder="Search mansions, weddings, things to do, places…" class="flex-1 outline-none text-sm" style="border:none">
-    </div>
-    <div id="search-panel" class="panel hidden mt-2 w-full p-3" style="max-height:24rem;overflow:auto"><div id="search-results"></div></div>
-  </div>
+  <button id="hero-search" class="tcsearch" style="max-width:40rem;width:100%" aria-label="Start your search">
+    <span class="tcsearch-seg" style="pointer-events:none"><span class="lbl">Where</span><span class="val placeholder">Any mansion</span></span>
+    <span class="tcsearch-div"></span>
+    <span class="tcsearch-seg" style="pointer-events:none"><span class="lbl">When</span><span class="val placeholder">Add dates</span></span>
+    <span class="tcsearch-div"></span>
+    <span class="tcsearch-seg" style="pointer-events:none"><span class="lbl">Who</span><span class="val placeholder">Add guests</span></span>
+    <span class="tcsearch-go" style="pointer-events:none">🔎<span>Search</span></span>
+  </button>
 
   <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-7 sm:gap-6"><a href="stays/the-timbercrest.html" class="block fade" style="text-decoration:none">
   <div class="photo " style="--g1:#3a3f49;--g2:#16181d;aspect-ratio:4/3;border-radius:.9rem" role="img" aria-label="Timbercrest Mansions"></div>
