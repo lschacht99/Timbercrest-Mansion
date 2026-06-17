@@ -391,3 +391,69 @@ header .btn-primary {
     max-width: 100% !important;
   }
 }
+/* =========================================================
+   FIX: one search bar only + centered search behavior
+   ========================================================= */
+
+/* Homepage hero search centered */
+.tcsearch-hero-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 60rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#hero-search.hero-search-centered {
+  width: 100% !important;
+  max-width: 60rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: flex !important;
+}
+
+/* Hero dropdown panel */
+.tcsearch-hero-wrap .tcsearch-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92vw, 44rem);
+  z-index: 60;
+}
+
+/* Inner pages: center the injected toolbar search */
+.tc-header-search-mode {
+  position: relative;
+}
+
+.tc-header-search-mode .tcsearch-wrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+}
+
+/* When toolbar search exists, hide the old desktop nav to avoid double toolbar */
+header.tc-has-header-search nav.tc-nav-hidden-by-search {
+  display: none !important;
+}
+
+/* Keep book button above search overlap */
+header .btn-primary {
+  position: relative;
+  z-index: 6;
+  white-space: nowrap;
+}
+
+/* Mobile: do not open desktop panel from hero */
+@media (max-width: 767px) {
+  .tcsearch-hero-wrap {
+    max-width: 100%;
+  }
+
+  .tcsearch-hero-wrap .tcsearch-panel {
+    display: none !important;
+  }
+}
