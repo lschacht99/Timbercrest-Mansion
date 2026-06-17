@@ -349,3 +349,45 @@ a { color: inherit; }
   flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem;
   font-size: .8rem; color: var(--ink-soft);
 }
+/* =========================================================
+   FIX: Search toolbar alignment + duplicate header toolbar
+   ========================================================= */
+
+/* Center the real homepage search bar */
+#hero-search.hero-search-centered {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: flex !important;
+}
+
+/* Do NOT allow the homepage search component to appear inside the header */
+header #hero-search,
+header .tcsearch {
+  display: none !important;
+}
+
+/* Keep the desktop header clean: logo / nav / book */
+header > div {
+  position: relative;
+}
+
+/* Prevent nav overlap if old injected toolbar code is still running */
+header nav {
+  position: static !important;
+  transform: none !important;
+  margin-left: auto;
+  margin-right: auto;
+  z-index: 2;
+}
+
+/* Book button stays on the right */
+header .btn-primary {
+  white-space: nowrap;
+}
+
+/* Mobile: keep normal behavior */
+@media (max-width: 767px) {
+  #hero-search.hero-search-centered {
+    max-width: 100% !important;
+  }
+}
