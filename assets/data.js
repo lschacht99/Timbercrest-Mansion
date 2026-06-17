@@ -1,10 +1,12 @@
 /* Shared site data — mirrors the React data so JS-driven pieces
    (universal search, booking page) stay in sync. */
 window.TC = {
-  WORKER_URL: "", // set to your deployed Worker /api/book URL; empty = demo mode
+  WORKER_BASE: "https://fletschhorn-guesty-api.bookings-e2d.workers.dev",
+  WORKER_URL: "https://fletschhorn-guesty-api.bookings-e2d.workers.dev/api/book",
 
   PROPERTIES: [
-    { id: "the-timbercrest", name: "The Timbercrest", bedrooms: 12, guests: 32, baths: 12.5,
+    { id: "the-timbercrest", listingId: "6968339ab7d735001ca015ba",
+      name: "The Timbercrest", bedrooms: 12, guests: 32, baths: 12.5,
       nightlyFrom: 2450, minNights: 2, pets: "allowed", rating: 4.97, reviews: 86,
       city: "West Dover, Vermont", g1: "#3a3f49", g2: "#16181d",
       blurb: "12BR · Sleeps 32 · Indoor pool · Hot tub" },
