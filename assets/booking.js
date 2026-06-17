@@ -137,7 +137,9 @@
 
   async function submit() {
     const payload = {
-      propertyIds: state.ids, checkIn: state.checkIn, checkOut: state.checkOut,
+      propertyIds: state.ids,
+      listingIds: selected().map((p) => p.listingId).filter(Boolean),
+      checkIn: state.checkIn, checkOut: state.checkOut,
       guests: { adults: state.adults, children: state.children, pets: state.pets },
       email: state.email, isEvent: state.isEvent,
       eventType: state.isEvent ? state.eventType : null,
