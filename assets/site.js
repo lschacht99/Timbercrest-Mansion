@@ -1,5 +1,29 @@
 /* Shared behavior for every page: mobile menu toggle, universal search. */
 (function () {
+  // ---- Scroll-aware navbar ----
+  (function () {
+    const hdr = document.querySelector("header");
+    if (!hdr) return;
+    let last = 0, ticking = false;
+    window.addEventListener("scroll", function () {
+      if (!ticking) {
+        requestAnimationFrame(function () {
+          const y = window.scrollY;
+          hdr.classList.toggle("nav-scrolled", y > 10);
+          if (y > 80) {
+            hdr.classList.toggle("nav-hidden", y > last + 4);
+            if (y < last - 4) hdr.classList.remove("nav-hidden");
+          } else {
+            hdr.classList.remove("nav-hidden");
+          }
+          last = y;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+  })();
+
   // ---- Mobile menu ----
   document.addEventListener("click", function (e) {
     const t = e.target.closest("[data-toggle]");
