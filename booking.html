@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Book Your Stay | Timbercrest Mansions</title>
+<meta name="description" content="Book one mansion or combine several side-by-side estates in a single reservation. Best rates guaranteed when booking direct.">
+<meta property="og:title" content="Book Your Stay | Timbercrest Mansions">
+<meta property="og:description" content="Book one mansion or combine several side-by-side estates in a single reservation. Best rates guaranteed when booking direct.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#16181d">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{fontFamily:{serif:["Cormorant Garamond","serif"]}}}}</script>
+
+</head>
+<body>
+<header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-stone-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
+    <a href="index.html" class="flex items-center gap-2 shrink-0" style="text-decoration:none">
+      <span class="font-serif text-lg sm:text-xl tracking-wide text-stone-900">Timbercrest <span class="text-stone-400 hidden sm:inline">Mansions</span></span>
+    </a>
+    <nav class="hidden md:flex items-center gap-1 text-sm"><a href="index.html" class="px-4 py-2 rounded-full transition text-stone-600 hover:bg-stone-100" style="text-decoration:none">Stays</a><a href="concept.html" class="px-4 py-2 rounded-full transition text-stone-600 hover:bg-stone-100" style="text-decoration:none">The concept</a><a href="events.html" class="px-4 py-2 rounded-full transition text-stone-600 hover:bg-stone-100" style="text-decoration:none">Events & weddings</a><a href="area.html" class="px-4 py-2 rounded-full transition text-stone-600 hover:bg-stone-100" style="text-decoration:none">The area</a></nav>
+    <div class="hidden md:block">
+      <a href="booking.html?event=1" class="btn btn-primary" style="padding:.6rem 1.25rem;border-radius:99px;text-decoration:none">Plan a group stay</a>
+    </div>
+    <a href="booking.html" class="md:hidden btn btn-primary" style="padding:.5rem 1rem;border-radius:99px;font-size:.85rem;text-decoration:none">Book</a>
+  </div>
+</header>
+<main class="max-w-6xl mx-auto px-4 sm:px-8 py-6 pb-40 lg:pb-16" id="booking-root"></main>
+<footer class="max-w-7xl mx-auto px-4 sm:px-8 mt-16 border-t border-stone-100 pt-6 pb-28 md:pb-10 text-xs text-stone-400 flex flex-wrap gap-x-6 gap-y-2">
+  <span>© Timbercrest Mansions</span><span>Privacy</span><span>Terms</span><span>802-210-0018</span>
+  <span class="sm:ml-auto">Best rates guaranteed when booking direct</span>
+</footer>
+<nav class="bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-stone-200 grid grid-cols-5 text-[10px]"><a href="index.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-500" style="text-decoration:none">Stays</a><a href="concept.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-500" style="text-decoration:none">Concept</a><a href="events.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-500" style="text-decoration:none">Events</a><a href="area.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-500" style="text-decoration:none">Area</a><a href="booking.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-900 font-semibold" style="text-decoration:none">Booking</a></nav>
+<script src="assets/data.js"></script><script src="assets/site.js"></script><script src="assets/booking.js"></script></body></html>
