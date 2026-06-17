@@ -18,46 +18,17 @@
 
 </head>
 <body>
-<header class="fs-toolbar" data-fs-toolbar>
-  <div class="fs-toolbar-shell">
-    <a class="fs-toolbar-logo" href="index.html">
-      Timbercrest
-      <span>Mansions</span>
+<header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-stone-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
+    <a href="index.html" class="flex items-center gap-2 shrink-0" style="text-decoration:none">
+      <span class="font-serif text-lg sm:text-xl tracking-wide text-stone-900">Timbercrest <span class="text-stone-400 hidden sm:inline">Mansions</span></span>
     </a>
-
-    <button class="fs-toolbar-compact" type="button" data-fs-toolbar-open>
-      <span>Plan a group stay</span>
-      <b>Dates · Guests · Book</b>
-    </button>
-
-    <div class="fs-toolbar-panel" data-fs-toolbar-panel>
-      <nav class="fs-toolbar-tabs" aria-label="Toolbar navigation">
-        <button type="button" class="active" data-fs-tab="stay">Stay</button>
-        <button type="button" data-fs-tab="events">Events</button>
-        <button type="button" data-fs-tab="browse">Browse</button>
-      </nav>
-
-      <div class="fs-toolbar-search">
-        <a href="booking.html" class="fs-toolbar-field">
-          <small>Book</small>
-          <strong>Choose dates</strong>
-        </a>
-        <a href="booking.html?event=1" class="fs-toolbar-field">
-          <small>Events</small>
-          <strong>Group stays</strong>
-        </a>
-        <a href="index.html#search-wrap" class="fs-toolbar-field">
-          <small>Browse</small>
-          <strong>Search mansions</strong>
-        </a>
-        <a href="booking.html" class="fs-toolbar-submit">Check availability</a>
-      </div>
+    <nav class="hidden md:flex items-center gap-1 text-sm"><a href="index.html" class="px-4 py-2 rounded-full transition text-stone-600 hover:bg-stone-100" style="text-decoration:none">Stays</a><a href="concept.html" class="px-4 py-2 rounded-full transition text-stone-600 hover:bg-stone-100" style="text-decoration:none">The concept</a><a href="events.html" class="px-4 py-2 rounded-full transition text-stone-600 hover:bg-stone-100" style="text-decoration:none">Events & weddings</a><a href="area.html" class="px-4 py-2 rounded-full transition bg-stone-900 text-white" style="text-decoration:none">The area</a></nav>
+    <div class="hidden md:block">
+      <a href="booking.html?event=1" class="btn btn-primary" style="padding:.6rem 1.25rem;border-radius:99px;text-decoration:none">Plan a group stay</a>
     </div>
-
-    <nav class="fs-toolbar-links"><a href="index.html">Stays</a><a href="concept.html">The concept</a><a href="events.html">Events & weddings</a><a href="area.html">The area</a><a href="booking.html">Booking</a></nav>
+    <a href="booking.html" class="md:hidden btn btn-primary" style="padding:.5rem 1rem;border-radius:99px;font-size:.85rem;text-decoration:none">Book</a>
   </div>
-
-  <button class="fs-toolbar-backdrop" type="button" aria-label="Close toolbar" data-fs-toolbar-close></button>
 </header>
 <main class="max-w-5xl mx-auto px-4 sm:px-8 py-8 space-y-12">
   <div class="fade">
