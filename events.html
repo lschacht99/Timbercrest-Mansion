@@ -18,17 +18,46 @@
 
 </head>
 <body>
-<header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-stone-100">
-  <div class="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
-    <a href="index.html" class="flex items-center gap-2 shrink-0" style="text-decoration:none">
-      <span class="font-serif text-lg sm:text-xl tracking-wide text-stone-900">Timbercrest <span class="text-stone-400 hidden sm:inline">Mansions</span></span>
+<header class="fs-toolbar" data-fs-toolbar>
+  <div class="fs-toolbar-shell">
+    <a class="fs-toolbar-logo" href="index.html">
+      Timbercrest
+      <span>Mansions</span>
     </a>
-    <nav class="hidden md:flex items-center gap-1 text-sm"><a href="index.html" class="px-4 py-2 rounded-full transition text-stone-600 hover:bg-stone-100" style="text-decoration:none">Stays</a><a href="concept.html" class="px-4 py-2 rounded-full transition text-stone-600 hover:bg-stone-100" style="text-decoration:none">The concept</a><a href="events.html" class="px-4 py-2 rounded-full transition bg-stone-900 text-white" style="text-decoration:none">Events & weddings</a><a href="area.html" class="px-4 py-2 rounded-full transition text-stone-600 hover:bg-stone-100" style="text-decoration:none">The area</a></nav>
-    <div class="hidden md:block">
-      <a href="booking.html?event=1" class="btn btn-primary" style="padding:.6rem 1.25rem;border-radius:99px;text-decoration:none">Plan a group stay</a>
+
+    <button class="fs-toolbar-compact" type="button" data-fs-toolbar-open>
+      <span>Plan a group stay</span>
+      <b>Dates · Guests · Book</b>
+    </button>
+
+    <div class="fs-toolbar-panel" data-fs-toolbar-panel>
+      <nav class="fs-toolbar-tabs" aria-label="Toolbar navigation">
+        <button type="button" class="active" data-fs-tab="stay">Stay</button>
+        <button type="button" data-fs-tab="events">Events</button>
+        <button type="button" data-fs-tab="browse">Browse</button>
+      </nav>
+
+      <div class="fs-toolbar-search">
+        <a href="booking.html" class="fs-toolbar-field">
+          <small>Book</small>
+          <strong>Choose dates</strong>
+        </a>
+        <a href="booking.html?event=1" class="fs-toolbar-field">
+          <small>Events</small>
+          <strong>Group stays</strong>
+        </a>
+        <a href="index.html#search-wrap" class="fs-toolbar-field">
+          <small>Browse</small>
+          <strong>Search mansions</strong>
+        </a>
+        <a href="booking.html" class="fs-toolbar-submit">Check availability</a>
+      </div>
     </div>
-    <a href="booking.html" class="md:hidden btn btn-primary" style="padding:.5rem 1rem;border-radius:99px;font-size:.85rem;text-decoration:none">Book</a>
+
+    <nav class="fs-toolbar-links"><a href="index.html">Stays</a><a href="concept.html">The concept</a><a href="events.html">Events & weddings</a><a href="area.html">The area</a><a href="booking.html">Booking</a></nav>
   </div>
+
+  <button class="fs-toolbar-backdrop" type="button" aria-label="Close toolbar" data-fs-toolbar-close></button>
 </header>
 <main class="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-14">
   <section class="rounded-xl overflow-hidden relative p-7 sm:p-14 text-white fade" style="background:linear-gradient(135deg,#372a1d,#44403c 60%,#16181d)">
@@ -53,7 +82,7 @@
       <div class="grid grid-cols-3 gap-6 text-center sm:text-left">
         <div><div class="font-serif text-3xl">72</div><div class="text-xs text-white/60 uppercase">guests, 3 houses</div></div>
         <div><div class="font-serif text-3xl">29</div><div class="text-xs text-white/60 uppercase">bedrooms</div></div>
-        <div><div class="font-serif text-3xl">104</div><div class="text-xs text-white/60 uppercase">with The Timbercrest</div></div>
+        <div><div class="font-serif text-3xl">134</div><div class="text-xs text-white/60 uppercase">with The Timbercrest</div></div>
       </div>
       <a href="booking.html?event=1&ids=the-myrtle,the-birch,the-mahogany" class="btn btn-white inline-block mt-6 sm:mt-0" style="padding:.85rem 1.5rem;text-decoration:none">Check multi-mansion availability</a>
     </div>
