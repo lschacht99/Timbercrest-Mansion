@@ -287,3 +287,65 @@ a { color: inherit; }
 .policy { text-align: left; border: 1px solid var(--line); background: #faf9f7; border-radius: .8rem; padding: 1.25rem; margin-top: 2rem; }
 .policy h2 { font-size: .9rem; margin: 0 0 .5rem; }
 .policy p { font-size: .8rem; color: #78716c; margin: 0; }
+
+/* ---- booking nearby nudge ---- */
+.bk-nearby-nudge {
+  font-size: .85rem; color: var(--ink-soft);
+  background: #faf9f7; border: 1px solid var(--line);
+  border-radius: .8rem; padding: .85rem 1rem; margin-top: .5rem;
+}
+.bk-nearby-nudge span { font-weight: 600; color: var(--ink); }
+.bk-nearby-nudge a { color: var(--bronze); font-weight: 600; text-decoration: none; }
+.bk-nearby-nudge a:hover { text-decoration: underline; }
+
+/* ============================================================
+   Reviews section
+   ============================================================ */
+.tc-reviews { padding: 0; }
+.tc-reviews-hd {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+}
+.tc-reviews-cta { font-size: .9rem; }
+.tc-reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+@media (max-width: 1279px) { .tc-reviews-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 639px)  { .tc-reviews-grid { grid-template-columns: 1fr; } }
+
+.tc-review {
+  background: #fff; border: 1px solid var(--line); border-radius: 1rem;
+  padding: 1.25rem; display: flex; flex-direction: column; gap: .75rem;
+  transition: box-shadow .2s;
+}
+.tc-review:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+.tc-review--featured {
+  border-color: var(--bronze); box-shadow: 0 0 0 2px rgba(146,64,14,.12);
+}
+.tc-review-top { display: flex; align-items: center; gap: .7rem; }
+.tc-review-avatar {
+  width: 2.4rem; height: 2.4rem; border-radius: 50%; flex: 0 0 auto;
+  background: var(--av, #44403c); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .95rem;
+}
+.tc-review-name { font-size: .85rem; font-weight: 600; }
+.tc-review-meta { font-size: .72rem; color: var(--ink-soft); }
+.tc-review-badge {
+  margin-left: auto; font-size: .6rem; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; padding: .2rem .55rem; border-radius: 99px; flex: 0 0 auto;
+}
+.tc-badge-airbnb { background: #ffe4e4; color: #e11d48; }
+.tc-badge-vrbo    { background: #e0f2fe; color: #0369a1; }
+.tc-badge-google  { background: #dcfce7; color: #166534; }
+.tc-review-stars  { color: #f59e0b; font-size: .95rem; letter-spacing: .05em; }
+.tc-review-text   { font-size: .83rem; color: var(--ink-soft); line-height: 1.6; margin: 0; flex: 1; }
+.tc-review-text strong { color: var(--ink); }
+.tc-review-date   { font-size: .7rem; color: #a8a29e; }
+.tc-reviews-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem;
+  font-size: .8rem; color: var(--ink-soft);
+}

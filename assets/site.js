@@ -142,6 +142,9 @@
 
     wrap.querySelector("[data-go]").addEventListener("click", (e) => {
       e.stopPropagation();
+      // If the panel isn't open yet, just open the "where" pane so the user can fill in details.
+      if (!panel.classList.contains("open")) { open("where"); return; }
+      // Only navigate once at least one field has been touched.
       const params = new URLSearchParams();
       if (state.ids.length) params.set("ids", state.ids.join(","));
       const base = location.pathname.includes("/stays/") ? "../booking.html" : "booking.html";
