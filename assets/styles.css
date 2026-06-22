@@ -349,3 +349,18 @@ a { color: inherit; }
   flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem;
   font-size: .8rem; color: var(--ink-soft);
 }
+
+/* ---- Availability status line (booking page) ---- */
+.avail-status {
+  font-size: .75rem; margin-top: .4rem; min-height: 1.2em;
+  color: #a8a29e; transition: color .2s;
+}
+.avail-status.loading { color: #92400e; }
+.avail-status.ok { color: #059669; }
+
+/* ---- flatpickr overrides ---- */
+.flatpickr-calendar { border-radius: 1rem !important; box-shadow: 0 12px 40px rgba(0,0,0,.15) !important; border: 1px solid var(--line) !important; font-family: "Inter", system-ui, sans-serif !important; }
+.flatpickr-day.selected, .flatpickr-day.selected:hover { background: var(--ink) !important; border-color: var(--ink) !important; }
+.flatpickr-day.inRange { background: rgba(28,25,23,.1) !important; border-color: transparent !important; }
+.flatpickr-day.disabled, .flatpickr-day.disabled:hover { background: #f5f5f4 !important; color: #d6d3d1 !important; text-decoration: line-through; }
+.flatpickr-months .flatpickr-prev-month:hover svg, .flatpickr-months .flatpickr-next-month:hover svg { fill: var(--bronze) !important; }

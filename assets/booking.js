@@ -1,7 +1,4 @@
-/* Booking page logic — runs only on booking.html.
-   Reads ?ids=the-birch,the-myrtle&event=1 from the URL, lets the user
-   adjust the selection, dates, guests and email, then submits ONE request
-   covering all chosen mansions to the Cloudflare Worker. */
+/* Booking page logic — runs only on booking.html. */
 (function () {
   const D = window.TC;
   const root = document.getElementById("booking-root");
@@ -15,6 +12,9 @@
     adults: 2, children: 0, pets: 0,
     email: "", eventType: "Wedding", message: "",
   };
+
+  /* flatpickr instances — recreated when selected properties change */
+  let fpIn = null, fpOut = null;
 
   const fmt = (n) => "$" + n.toLocaleString();
   const nights = () => {
@@ -32,7 +32,6 @@
 
   function render() {
     const n = nights();
-    const heads = selected().map((p) => p.name).join(" + ");
     root.innerHTML = `
       <a href="index.html" class="inline-flex items-center gap-2 text-sm py-3" style="text-decoration:none">&larr; Back</a>
       <h1 class="font-serif" style="font-size:2rem;margin:.2rem 0">${state.isEvent ? "Plan your celebration" : "Confirm and book"}</h1>
@@ -57,10 +56,11 @@
           <section class="bk-sec">
             <h2>2 &middot; Your dates ${n ? `<small>· ${n} nights</small>` : ""}</h2>
             <div class="bk-dates">
-              <label>Check-in<input type="date" id="ci" value="${state.checkIn}"></label>
-              <label>Checkout<input type="date" id="co" value="${state.checkOut}"></label>
+              <label>Check-in<input type="text" id="ci" placeholder="Select date" value="${state.checkIn}" readonly style="cursor:pointer"></label>
+              <label>Checkout<input type="text" id="co" placeholder="Select date" value="${state.checkOut}" readonly style="cursor:pointer"></label>
             </div>
-            ${n > 0 && n < minNights() ? `<p class="warn">This selection requires a minimum stay of ${minNights()} nights. Please choose at least ${minNights()} nights to continue.</p>` : ""}
+            <div id="avail-status" class="avail-status"></div>
+            ${n > 0 && n < minNights() ? `<p class="warn">This selection requires a minimum stay of ${minNights()} nights.</p>` : ""}
           </section>
 
           <section class="bk-sec">
@@ -104,12 +104,13 @@
             </div>
             <button class="btn btn-primary bk-submit" id="submit" ${ready() ? "" : "disabled"}>${state.isEvent ? "Reserve your weekend" : "Book now"}</button>
             <p class="fine">You won't be charged yet · Best rates booking direct</p>
-            <p class="fine">By continuing, you agree to our <a href="#policy">cancellation policy and rental agreement</a>. Full terms appear on your confirmation.</p>
+            <p class="fine">By continuing, you agree to our <a href="#policy">cancellation policy and rental agreement</a>.</p>
           </div>
         </aside>
       </div>`;
 
     wire();
+    initDates();
   }
 
   function stepper(label, key, min) {
@@ -130,12 +131,105 @@
     root.querySelectorAll("[data-inc]").forEach((b) => b.onclick = () => { state[b.dataset.inc]++; render(); });
     root.querySelectorAll("[data-dec]").forEach((b) => b.onclick = () => { state[b.dataset.dec] = Math.max(0, state[b.dataset.dec] - 1); render(); });
     root.querySelectorAll("[data-occ]").forEach((b) => b.onclick = () => { state.eventType = b.dataset.occ; render(); });
-    const mk = root.querySelector("[data-makeevent]"); if (mk) mk.onclick = () => { state.isEvent = true; render(); };
-    const ci = root.querySelector("#ci"); if (ci) ci.onchange = (e) => { state.checkIn = e.target.value; render(); };
-    const co = root.querySelector("#co"); if (co) co.onchange = (e) => { state.checkOut = e.target.value; render(); };
     const em = root.querySelector("#email"); if (em) em.oninput = (e) => { state.email = e.target.value; document.getElementById("submit").disabled = !ready(); };
     const msg = root.querySelector("#msg"); if (msg) msg.oninput = (e) => { state.message = e.target.value; };
     const sb = root.querySelector("#submit"); if (sb) sb.onclick = submit;
+  }
+
+  /* ---- Availability-aware date picker ---- */
+  async function initDates() {
+    if (fpIn) { try { fpIn.destroy(); } catch (e) {} fpIn = null; }
+    if (fpOut) { try { fpOut.destroy(); } catch (e) {} fpOut = null; }
+
+    const ciEl = root.querySelector("#ci");
+    const coEl = root.querySelector("#co");
+    if (!ciEl || !coEl) return;
+
+    /* Fetch blocked dates for all selected properties */
+    let blockedDates = [];
+    if (D.api) {
+      const statusEl = root.querySelector("#avail-status");
+      if (statusEl) { statusEl.textContent = "Checking availability…"; statusEl.className = "avail-status loading"; }
+
+      const today = new Date();
+      const far = new Date(today); far.setFullYear(far.getFullYear() + 1);
+      const fromStr = today.toISOString().slice(0, 10);
+      const toStr = far.toISOString().slice(0, 10);
+
+      const listingIds = selected().map((p) => p.listingId).filter(Boolean);
+      const results = await Promise.all(listingIds.map((lid) => D.api.getCalendar(lid, fromStr, toStr)));
+      const blocked = new Set(results.flat());
+      blockedDates = Array.from(blocked);
+
+      if (statusEl) {
+        statusEl.textContent = blockedDates.length ? "Booked dates are shown in grey." : "";
+        statusEl.className = "avail-status" + (blockedDates.length ? " ok" : "");
+      }
+    }
+
+    if (window.flatpickr) {
+      const common = {
+        minDate: "today",
+        disable: blockedDates,
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "M j, Y",
+        disableMobile: false,
+      };
+      fpIn = flatpickr(ciEl, {
+        ...common,
+        onChange: ([, dateStr]) => {
+          state.checkIn = dateStr;
+          if (fpOut) fpOut.set("minDate", dateStr);
+          renderSummary();
+        },
+      });
+      fpOut = flatpickr(coEl, {
+        ...common,
+        minDate: state.checkIn || "today",
+        onChange: ([, dateStr]) => {
+          state.checkOut = dateStr;
+          renderSummary();
+        },
+      });
+      if (state.checkIn) fpIn.setDate(state.checkIn, false);
+      if (state.checkOut) fpOut.setDate(state.checkOut, false);
+    } else {
+      ciEl.type = "date"; coEl.type = "date";
+      ciEl.min = new Date().toISOString().slice(0, 10);
+      ciEl.value = state.checkIn; coEl.value = state.checkOut;
+      ciEl.onchange = (e) => { state.checkIn = e.target.value; coEl.min = e.target.value; renderSummary(); };
+      coEl.onchange = (e) => { state.checkOut = e.target.value; renderSummary(); };
+    }
+  }
+
+  /* Partial re-render: update the summary panel without destroying flatpickr */
+  function renderSummary() {
+    const n = nights();
+    const sumEl = root.querySelector(".bk-lines");
+    if (!sumEl) return;
+
+    root.querySelectorAll(".warn").forEach((w) => w.remove());
+
+    sumEl.innerHTML = `
+      ${selected().map((p) => `<div class="line"><span>${p.name}${n ? ` × ${n} nights` : ""}</span><span>${n ? fmt(p.nightlyFrom * n) : fmt(p.nightlyFrom) + "/n"}</span></div>`).join("")}
+      ${n >= minNights() && selected().length ? `
+        <div class="line"><span>Cleaning (${selected().length} house${selected().length > 1 ? "s" : ""})</span><span>${fmt(cleaning())}</span></div>
+        <div class="line total"><span>Total before taxes</span><span>${fmt(total())}</span></div>` : ""}
+      ${selected().length ? `<p class="cap ${state.adults + state.children <= capacity() ? "ok" : "over"}">${state.adults + state.children <= capacity() ? `✓ Sleeps ${capacity()} — room for your ${state.adults + state.children}.` : `Sleeps ${capacity()} — add a mansion for ${state.adults + state.children} guests.`}</p>` : ""}`;
+
+    const sb = root.querySelector("#submit");
+    if (sb) sb.disabled = !ready();
+
+    if (n > 0 && n < minNights()) {
+      const el = root.querySelector(".bk-dates");
+      if (el) {
+        const w = document.createElement("p");
+        w.className = "warn";
+        w.textContent = `This selection requires a minimum stay of ${minNights()} nights.`;
+        el.insertAdjacentElement("afterend", w);
+      }
+    }
   }
 
   async function submit() {
@@ -150,7 +244,10 @@
     };
     let live = false;
     if (D.WORKER_URL) {
-      try { const r = await fetch(D.WORKER_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); live = r.ok; } catch (e) {}
+      try {
+        const r = await fetch(D.WORKER_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        live = r.ok;
+      } catch (e) {}
     }
     done(live);
   }
@@ -162,12 +259,12 @@
         <div class="check-big">&#10003;</div>
         <h1 class="font-serif">${state.isEvent ? "Your event will be wonderful." : "See you in Vermont."}</h1>
         <p>${state.isEvent
-          ? `We can already picture it — the veranda at golden hour, one long table, ${selected().length > 1 ? `everyone you love spread across ${selected().length} houses, a few steps apart` : "everyone you love under one roof"}. The Timbercrest team will confirm availability for ${heads} and reach out at ${state.email} within one business day.`
+          ? `We can already picture it — the veranda at golden hour, one long table, ${selected().length > 1 ? `everyone you love spread across ${selected().length} houses` : "everyone you love under one roof"}. We'll confirm availability for ${heads} and reach out at ${state.email} within one business day.`
           : `Your request for ${heads} (${nights()} nights) was sent. We'll confirm at ${state.email} within 24 hours.`}</p>
-        <p class="fine">${live ? "Submitted via your Cloudflare Worker." : "Demo mode: the Worker isn't connected yet, so this was simulated — the payload is ready to go live."}</p>
+        <p class="fine">${live ? "Submitted via your Cloudflare Worker." : "Demo mode — Worker not connected yet."}</p>
         <div class="policy" id="policy">
           <h2>Cancellation policy &amp; rental agreement</h2>
-          <p>Free cancellation up to 60 days before check-in; 50% refund up to 30 days before. The full rental agreement and house rules are included in your confirmation email. Replace this placeholder with your actual terms before launch.</p>
+          <p>Free cancellation up to 60 days before check-in; 50% refund up to 30 days before. Full terms in your confirmation email.</p>
         </div>
         <a href="index.html" class="btn btn-primary" style="display:inline-block;padding:.8rem 1.5rem;text-decoration:none;margin-top:1.5rem">Back to the mansions</a>
       </div>`;

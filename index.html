@@ -12,7 +12,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=3">
+<link rel="stylesheet" href="assets/styles.css?v=4">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{fontFamily:{serif:["Cormorant Garamond","serif"]}}}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LocalBusiness","name":"Timbercrest Mansions","description":"Luxury Vermont mansion rentals near Mount Snow.","address":{"@type":"PostalAddress","addressLocality":"West Dover","addressRegion":"VT","addressCountry":"US"},"telephone":"+1-802-210-0018","url":"https://timbercrestmansions.com","priceRange":"$$$"}</script>
@@ -45,8 +45,8 @@
     <span class="tcsearch-go" style="pointer-events:none">🔎<span>Search</span></span>
   </button>
 
-  <div class="home-listings"><a href="stays/the-timbercrest.html" class="block fade" style="text-decoration:none">
-  <div class="photo " style="--g1:#3a3f49;--g2:#16181d;aspect-ratio:4/3;border-radius:.9rem" role="img" aria-label="Timbercrest Mansions"></div>
+  <div class="home-listings"><a href="stays/the-timbercrest.html" class="block fade" data-prop-id="the-timbercrest" style="text-decoration:none">
+  <div class="photo" data-photo-idx="0" style="--g1:#3a3f49;--g2:#16181d;aspect-ratio:4/3;border-radius:.9rem" role="img" aria-label="The Timbercrest"></div>
   <div class="mt-3">
     <div class="flex justify-between gap-3">
       <span class="font-semibold text-[15px]">The Timbercrest — 12BR</span>
@@ -54,8 +54,8 @@
     </div>
     <div class="text-sm text-stone-500">West Dover, Vermont · sleeps 32</div>
     <div class="flex items-center gap-2 mt-1"><span class="text-sm"><span class="font-semibold">$2,450</span> <span class="text-stone-500">night</span></span><span style="display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:500;padding:.25rem .6rem;border-radius:99px;background:rgba(146,64,14,.1);color:#92400e">🐾 Pets welcome</span></div>
-  </div></a><a href="stays/the-myrtle.html" class="block fade" style="text-decoration:none">
-  <div class="photo " style="--g1:#6e5840;--g2:#372a1d;aspect-ratio:4/3;border-radius:.9rem" role="img" aria-label="Timbercrest Mansions"></div>
+  </div></a><a href="stays/the-myrtle.html" class="block fade" data-prop-id="the-myrtle" style="text-decoration:none">
+  <div class="photo" data-photo-idx="0" style="--g1:#6e5840;--g2:#372a1d;aspect-ratio:4/3;border-radius:.9rem" role="img" aria-label="The Myrtle"></div>
   <div class="mt-3">
     <div class="flex justify-between gap-3">
       <span class="font-semibold text-[15px]">The Myrtle — 7BR</span>
@@ -63,8 +63,8 @@
     </div>
     <div class="text-sm text-stone-500">Dover, Vermont · sleeps 18</div>
     <div class="flex items-center gap-2 mt-1"><span class="text-sm"><span class="font-semibold">$1,280</span> <span class="text-stone-500">night</span></span><span style="display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:500;padding:.25rem .6rem;border-radius:99px;background:rgba(146,64,14,.1);color:#92400e">🐾 Pets welcome (fee applies)</span></div>
-  </div></a><a href="stays/the-birch.html" class="block fade" style="text-decoration:none">
-  <div class="photo " style="--g1:#54687a;--g2:#26333e;aspect-ratio:4/3;border-radius:.9rem" role="img" aria-label="Timbercrest Mansions"></div>
+  </div></a><a href="stays/the-birch.html" class="block fade" data-prop-id="the-birch" style="text-decoration:none">
+  <div class="photo" data-photo-idx="0" style="--g1:#54687a;--g2:#26333e;aspect-ratio:4/3;border-radius:.9rem" role="img" aria-label="The Birch"></div>
   <div class="mt-3">
     <div class="flex justify-between gap-3">
       <span class="font-semibold text-[15px]">The Birch — 13BR</span>
@@ -72,8 +72,8 @@
     </div>
     <div class="text-sm text-stone-500">Dover, Vermont · sleeps 32</div>
     <div class="flex items-center gap-2 mt-1"><span class="text-sm"><span class="font-semibold">$2,300</span> <span class="text-stone-500">night</span></span></div>
-  </div></a><a href="stays/the-mahogany.html" class="block fade" style="text-decoration:none">
-  <div class="photo " style="--g1:#7a4a3a;--g2:#37201a;aspect-ratio:4/3;border-radius:.9rem" role="img" aria-label="Timbercrest Mansions"></div>
+  </div></a><a href="stays/the-mahogany.html" class="block fade" data-prop-id="the-mahogany" style="text-decoration:none">
+  <div class="photo" data-photo-idx="0" style="--g1:#7a4a3a;--g2:#37201a;aspect-ratio:4/3;border-radius:.9rem" role="img" aria-label="The Mahogany"></div>
   <div class="mt-3">
     <div class="flex justify-between gap-3">
       <span class="font-semibold text-[15px]">The Mahogany — 9BR</span>
@@ -191,4 +191,4 @@
   <span class="sm:ml-auto">Best rates guaranteed when booking direct</span>
 </footer>
 <nav class="bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-stone-200 grid grid-cols-5 text-[10px]"><a href="index.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-900 font-semibold" style="text-decoration:none">Stays</a><a href="concept.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-500" style="text-decoration:none">Concept</a><a href="events.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-500" style="text-decoration:none">Events</a><a href="area.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-500" style="text-decoration:none">Area</a><a href="booking.html" class="flex flex-col items-center gap-1 py-2.5 text-stone-500" style="text-decoration:none">Booking</a></nav>
-<script src="assets/data.js"></script><script src="assets/site.js?v=3"></script></body></html>
+<script src="assets/data.js"></script><script src="assets/api.js"></script><script src="assets/site.js?v=4"></script></body></html>
