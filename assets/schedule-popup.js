@@ -34,7 +34,7 @@
     if(document.querySelector('link[data-schedule-popup]')) return;
     const css=document.createElement("link");
     css.rel="stylesheet";
-    css.href=(isStay()?"../":"")+"assets/schedule-popup.css?v=5";
+    css.href=(isStay()?"../":"")+"assets/schedule-popup.css?v=6";
     css.dataset.schedulePopup="1";
     document.head.appendChild(css);
   }
@@ -127,7 +127,7 @@
   function selectedNights(){return state.checkIn&&state.checkOut?Math.max(0,Math.round((new Date(state.checkOut)-new Date(state.checkIn))/86400000)):0;}
   function render(){
     const n=selectedNights(), combined=state.mode==="combined";
-    modal.innerHTML=`<div class="tc-cal-head"><div><div class="tc-cal-kicker">Schedule</div><h2 class="tc-cal-title">${esc(headerTitle())}</h2><p class="tc-cal-sub">${combined?"Colors show each selected mansion. Light grey means at least one selected mansion is not open.":"Live availability and nightly prices from Guesty."}</p></div><button class="tc-cal-x" type="button" aria-label="Close">×</button></div><div class="tc-cal-body"><aside class="tc-cal-side">${legend()}<div class="tc-cal-range"><b>Your dates</b><div>${fmtDate(state.checkIn)} → ${fmtDate(state.checkOut)}</div>${n?`<div class="tc-cal-legend-small">${n} night${n>1?"s":""}</div>`:`<div class="tc-cal-legend-small">Click a check-in date, then checkout date.</div>`}</div><div class="tc-cal-note">Prices appear inside available dates. In combined mode, the price is the selected mansions together for that night.</div>${state.error?`<div class="tc-cal-error">${esc(state.error)}</div>`:""}<div class="tc-cal-actions"><button class="tc-cal-btn primary" data-apply ${state.checkIn&&state.checkOut?"":"disabled"}>Continue with dates</button><button class="tc-cal-btn secondary" data-clear>Clear dates</button></div></aside><main class="tc-cal-main">${calendarHtml()}</main></div>`;
+    modal.innerHTML=`<div class="tc-cal-head"><div><div class="tc-cal-kicker">Schedule</div><h2 class="tc-cal-title">${esc(headerTitle())}</h2><p class="tc-cal-sub">${combined?"One line per selected mansion. Colored line = open, red line = not available. Price is the total for all selected mansions that night.":"Live availability and nightly prices from Guesty."}</p></div><button class="tc-cal-x" type="button" aria-label="Close">×</button></div><div class="tc-cal-body"><aside class="tc-cal-side">${legend()}<div class="tc-cal-range"><b>Your dates</b><div>${fmtDate(state.checkIn)} → ${fmtDate(state.checkOut)}</div>${n?`<div class="tc-cal-legend-small">${n} night${n>1?"s":""}</div>`:`<div class="tc-cal-legend-small">Click a check-in date, then checkout date.</div>`}</div><div class="tc-cal-note">Light grey means at least one selected mansion is blocked for that day.</div>${state.error?`<div class="tc-cal-error">${esc(state.error)}</div>`:""}<div class="tc-cal-actions"><button class="tc-cal-btn primary" data-apply ${state.checkIn&&state.checkOut?"":"disabled"}>Continue with dates</button><button class="tc-cal-btn secondary" data-clear>Clear dates</button></div></aside><main class="tc-cal-main">${calendarHtml()}</main></div>`;
     $(".tc-cal-x",modal).onclick=close;
     $("[data-clear]",modal).onclick=()=>{state.checkIn="";state.checkOut="";state.error="";render();};
     $("[data-apply]",modal).onclick=applyDates;
@@ -144,24 +144,35 @@
     for(let i=0;i<42;i++){const d=addDays(gridStart,i);cells+=dayCell(toIso(d),d.getMonth()!==m.getMonth());}
     return `<div class="tc-cal-toolbar"><div class="tc-cal-month">${title}</div><div class="tc-cal-nav"><button type="button" data-cal-nav="-1">‹</button><button type="button" data-cal-nav="1">›</button></div></div><div class="tc-cal-week">${weekdays}</div><div class="tc-cal-grid">${cells}</div>`;
   }
+  function dayPrice(row){
+    if(!row.isOpen) return 0;
+    const raw=row.day?.price??row.p?.nightlyFrom??0;
+    const n=Number(raw);
+    return Number.isFinite(n)&&n>0?n:0;
+  }
   function infoForDate(date){
-    const rows=selectedProps().map(p=>({p,day:(state.data[p.id]||{})[date]||null}));
-    const open=rows.filter(x=>x.day&&!x.day.unavailable&&x.day.available!==false);
-    const prices=open.map(x=>Number(x.day.price)).filter(v=>Number.isFinite(v)&&v>0);
+    const rows=selectedProps().map(p=>{
+      const day=(state.data[p.id]||{})[date]||null;
+      const isOpen=Boolean(day&&!day.unavailable&&day.available!==false);
+      const currency=day?.currency||D.CURRENCY||"USD";
+      return {p,day,isOpen,currency};
+    });
+    const open=rows.filter(x=>x.isOpen);
     const allOpen=rows.length>0&&open.length===rows.length;
     const partial=state.mode==="combined"&&open.length>0&&!allOpen;
-    const price=state.mode==="combined"?(prices.length?prices.reduce((a,b)=>a+b,0):null):(prices.length?Math.min(...prices):null);
-    return {rows,open,price,allOpen,partial};
+    const total=allOpen?rows.reduce((sum,row)=>sum+dayPrice(row),0):0;
+    return {rows,open,price:total||null,allOpen,partial,currency:(open[0]?.currency)||"USD"};
   }
   function inRange(date){return state.checkIn&&state.checkOut&&date>state.checkIn&&date<state.checkOut;}
   function dayCell(date,out){
     const d=new Date(date+"T00:00:00"), info=infoForDate(date), past=date<todayIso();
     const disabled=out||past||!info.allOpen;
     const selected=date===state.checkIn||date===state.checkOut;
-    const price=info.price?money(info.price,(info.open[0]&&info.open[0].day.currency)||"USD"):"";
+    const price=info.price?money(info.price,info.currency):"";
     const status=state.mode==="combined"?(info.allOpen?"All open":info.partial?`${info.open.length}/${info.rows.length} open`:"Booked"):(info.allOpen?"Available":"Booked");
-    const bars=state.mode==="combined"?`<div class="tc-cal-bars">${info.rows.map(x=>`<span class="tc-cal-bar ${x.day&&!x.day.unavailable&&x.day.available!==false?"open":""}" style="--tc-color:${COLORS[x.p.id]||x.p.g1||"#1c1917"}"></span>`).join("")}</div>`:"";
-    return `<button type="button" class="tc-cal-day ${out?"out":""} ${disabled?"unavailable":""} ${info.partial?"partial":""} ${selected?"selected":""} ${inRange(date)?"in-range":""}" data-date="${date}" ${disabled?"aria-disabled='true'":""} ${out?"tabindex='-1'":""}><span class="tc-cal-date">${d.getDate()}</span>${price?`<span class="tc-cal-price">${price}</span>`:""}<span class="tc-cal-status">${past?"Past":status}</span>${bars}</button>`;
+    const details=info.rows.map(x=>`${x.p.name}: ${x.isOpen?"open":"not available"}`).join(" | ");
+    const bars=state.mode==="combined"?`<div class="tc-cal-bars">${info.rows.map(x=>`<span class="tc-cal-bar ${x.isOpen?"open":"closed"}" style="--tc-color:${COLORS[x.p.id]||x.p.g1||"#1c1917"}"></span>`).join("")}</div>`:"";
+    return `<button type="button" class="tc-cal-day ${out?"out":""} ${disabled?"unavailable":""} ${info.partial?"partial":""} ${selected?"selected":""} ${inRange(date)?"in-range":""}" data-date="${date}" title="${esc(details)}${price?` · Total ${esc(price)}`:""}" ${disabled?"aria-disabled='true'":""} ${out?"tabindex='-1'":""}><span class="tc-cal-date">${d.getDate()}</span>${price?`<span class="tc-cal-price">${price}</span>`:""}<span class="tc-cal-status">${past?"Past":status}</span>${bars}</button>`;
   }
   function rangeHasClosed(start,end){
     if(!start||!end) return false;
