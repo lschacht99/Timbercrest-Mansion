@@ -1,0 +1,73 @@
+/* Mobile booking/form layout fixes */
+@media (max-width: 767px) {
+  #booking-root {
+    padding-top: .5rem;
+  }
+
+  #booking-root .bk-grid {
+    display: block;
+    margin-top: 1.25rem;
+  }
+
+  #booking-root .bk-sec {
+    margin-bottom: 1.35rem;
+  }
+
+  #booking-root .bk-dates {
+    grid-template-columns: 1fr !important;
+    gap: .65rem;
+    padding: .78rem;
+  }
+
+  #booking-root .bk-dates label,
+  #booking-root .bk-email,
+  #booking-root .step {
+    min-width: 0;
+  }
+
+  #booking-root .bk-dates input,
+  #booking-root .bk-email input,
+  #booking-root #msg {
+    width: 100%;
+    min-width: 0;
+  }
+
+  #booking-root .bk-guests {
+    width: 100%;
+    max-width: none;
+    padding: .45rem .85rem;
+  }
+
+  #booking-root .bk-summary {
+    position: static;
+    top: auto;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: .85rem;
+    box-shadow: 0 14px 32px rgba(0,0,0,.06);
+  }
+
+  #booking-root aside {
+    width: 100%;
+  }
+
+  #booking-root .line {
+    gap: .75rem;
+    align-items: flex-start;
+  }
+
+  #booking-root .line span:first-child {
+    min-width: 0;
+  }
+
+  #booking-root .line span:last-child {
+    flex: 0 0 auto;
+    text-align: right;
+  }
+}
+
+@media (max-width: 380px) {
+  #booking-root .bk-props {
+    grid-template-columns: 1fr;
+  }
+}
