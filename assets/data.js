@@ -108,5 +108,5 @@
   }
 
   // Single source of truth: this includes Fletschhorn-style date modal + routing interception.
-  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=5", "data-schedule-popup");
+  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=6", "data-schedule-popup");
 })();
