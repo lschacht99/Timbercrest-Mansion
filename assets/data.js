@@ -95,7 +95,7 @@
     document.head.appendChild(css);
   }
 
-  loadCssOnce(assetPrefix + "assets/schedule-popup.css?v=7", "data-schedule-popup");
+  loadCssOnce(assetPrefix + "assets/schedule-popup.css?v=8", "data-schedule-popup");
   loadCssOnce(assetPrefix + "assets/mobile-fixes.css?v=2", "data-mobile-fixes");
 
   function loadScriptOnce(src, attrName) {
@@ -112,5 +112,5 @@
   }
 
   // Single source of truth: this includes Fletschhorn-style date modal + routing interception.
-  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=8", "data-schedule-popup");
+  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=9", "data-schedule-popup");
 })();
