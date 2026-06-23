@@ -7,7 +7,12 @@
   const D=window.TC;
   if(!D||typeof D.apiUrl!=="function") return;
 
-  const COLORS={"the-birch":"#54687a","the-mahogany":"#7a4a3a","the-myrtle":"#6e5840","the-timbercrest":"#3a3f49"};
+  const COLORS={
+    "the-birch":"#2563eb",
+    "the-mahogany":"#dc2626",
+    "the-myrtle":"#eab308",
+    "the-timbercrest":"#16a34a"
+  };
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const esc=v=>String(v??"").replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'\"':"&quot;","'":"&#39;"}[c]));
@@ -34,7 +39,7 @@
     if(document.querySelector('link[data-schedule-popup]')) return;
     const css=document.createElement("link");
     css.rel="stylesheet";
-    css.href=(isStay()?"../":"")+"assets/schedule-popup.css?v=6";
+    css.href=(isStay()?"../":"")+"assets/schedule-popup.css?v=7";
     css.dataset.schedulePopup="1";
     document.head.appendChild(css);
   }
@@ -127,7 +132,7 @@
   function selectedNights(){return state.checkIn&&state.checkOut?Math.max(0,Math.round((new Date(state.checkOut)-new Date(state.checkIn))/86400000)):0;}
   function render(){
     const n=selectedNights(), combined=state.mode==="combined";
-    modal.innerHTML=`<div class="tc-cal-head"><div><div class="tc-cal-kicker">Schedule</div><h2 class="tc-cal-title">${esc(headerTitle())}</h2><p class="tc-cal-sub">${combined?"One line per selected mansion. Colored line = open, red line = not available. Price is the total for all selected mansions that night.":"Live availability and nightly prices from Guesty."}</p></div><button class="tc-cal-x" type="button" aria-label="Close">×</button></div><div class="tc-cal-body"><aside class="tc-cal-side">${legend()}<div class="tc-cal-range"><b>Your dates</b><div>${fmtDate(state.checkIn)} → ${fmtDate(state.checkOut)}</div>${n?`<div class="tc-cal-legend-small">${n} night${n>1?"s":""}</div>`:`<div class="tc-cal-legend-small">Click a check-in date, then checkout date.</div>`}</div><div class="tc-cal-note">Light grey means at least one selected mansion is blocked for that day.</div>${state.error?`<div class="tc-cal-error">${esc(state.error)}</div>`:""}<div class="tc-cal-actions"><button class="tc-cal-btn primary" data-apply ${state.checkIn&&state.checkOut?"":"disabled"}>Continue with dates</button><button class="tc-cal-btn secondary" data-clear>Clear dates</button></div></aside><main class="tc-cal-main">${calendarHtml()}</main></div>`;
+    modal.innerHTML=`<div class="tc-cal-head"><div><div class="tc-cal-kicker">Schedule</div><h2 class="tc-cal-title">${esc(headerTitle())}</h2><p class="tc-cal-sub">${combined?"Dots show each selected mansion. Colored dot = available, red dot = blocked. Total nightly price appears first.":"Live availability and nightly prices from Guesty."}</p></div><button class="tc-cal-x" type="button" aria-label="Close">×</button></div><div class="tc-cal-body"><aside class="tc-cal-side">${legend()}<div class="tc-cal-range"><b>Your dates</b><div>${fmtDate(state.checkIn)} → ${fmtDate(state.checkOut)}</div>${n?`<div class="tc-cal-legend-small">${n} night${n>1?"s":""}</div>`:`<div class="tc-cal-legend-small">Click a check-in date, then checkout date.</div>`}</div><div class="tc-cal-note">Green outline = bookable. Yellow = partial. Grey/red = not possible.</div>${state.error?`<div class="tc-cal-error">${esc(state.error)}</div>`:""}<div class="tc-cal-actions"><button class="tc-cal-btn primary" data-apply ${state.checkIn&&state.checkOut?"":"disabled"}>Continue with dates</button><button class="tc-cal-btn secondary" data-clear>Clear dates</button></div></aside><main class="tc-cal-main">${calendarHtml()}</main></div>`;
     $(".tc-cal-x",modal).onclick=close;
     $("[data-clear]",modal).onclick=()=>{state.checkIn="";state.checkOut="";state.error="";render();};
     $("[data-apply]",modal).onclick=applyDates;
@@ -160,8 +165,9 @@
     const open=rows.filter(x=>x.isOpen);
     const allOpen=rows.length>0&&open.length===rows.length;
     const partial=state.mode==="combined"&&open.length>0&&!allOpen;
+    const noneOpen=rows.length>0&&open.length===0;
     const total=allOpen?rows.reduce((sum,row)=>sum+dayPrice(row),0):0;
-    return {rows,open,price:total||null,allOpen,partial,currency:(open[0]?.currency)||"USD"};
+    return {rows,open,price:total||null,allOpen,partial,noneOpen,currency:(open[0]?.currency)||"USD"};
   }
   function inRange(date){return state.checkIn&&state.checkOut&&date>state.checkIn&&date<state.checkOut;}
   function dayCell(date,out){
@@ -169,10 +175,10 @@
     const disabled=out||past||!info.allOpen;
     const selected=date===state.checkIn||date===state.checkOut;
     const price=info.price?money(info.price,info.currency):"";
-    const status=state.mode==="combined"?(info.allOpen?"All open":info.partial?`${info.open.length}/${info.rows.length} open`:"Booked"):(info.allOpen?"Available":"Booked");
+    const status=state.mode==="combined"?(info.allOpen?"All open":info.partial?`${info.open.length}/${info.rows.length} open`:"Not open"):(info.allOpen?"Available":"Booked");
     const details=info.rows.map(x=>`${x.p.name}: ${x.isOpen?"open":"not available"}`).join(" | ");
-    const bars=state.mode==="combined"?`<div class="tc-cal-bars">${info.rows.map(x=>`<span class="tc-cal-bar ${x.isOpen?"open":"closed"}" style="--tc-color:${COLORS[x.p.id]||x.p.g1||"#1c1917"}"></span>`).join("")}</div>`:"";
-    return `<button type="button" class="tc-cal-day ${out?"out":""} ${disabled?"unavailable":""} ${info.partial?"partial":""} ${selected?"selected":""} ${inRange(date)?"in-range":""}" data-date="${date}" title="${esc(details)}${price?` · Total ${esc(price)}`:""}" ${disabled?"aria-disabled='true'":""} ${out?"tabindex='-1'":""}><span class="tc-cal-date">${d.getDate()}</span>${price?`<span class="tc-cal-price">${price}</span>`:""}<span class="tc-cal-status">${past?"Past":status}</span>${bars}</button>`;
+    const dots=state.mode==="combined"?`<div class="tc-cal-dots">${info.rows.map(x=>`<span class="tc-cal-state-dot ${x.isOpen?"open":"closed"}" style="--tc-color:${COLORS[x.p.id]||x.p.g1||"#1c1917"}" aria-label="${esc(x.p.name)} ${x.isOpen?"open":"blocked"}"></span>`).join("")}</div>`:"";
+    return `<button type="button" class="tc-cal-day ${out?"out":""} ${info.allOpen?"all-open":""} ${info.partial?"partial":""} ${info.noneOpen?"none-open":""} ${disabled?"unavailable":""} ${selected?"selected":""} ${inRange(date)?"in-range":""}" data-date="${date}" title="${esc(details)}${price?` · Total ${esc(price)}`:""}" ${disabled?"aria-disabled='true'":""} ${out?"tabindex='-1'":""}><span class="tc-cal-top"><span class="tc-cal-date">${d.getDate()}</span>${price?`<span class="tc-cal-price">${price}</span>`:""}</span><span class="tc-cal-status">${past?"Past":status}</span>${dots}</button>`;
   }
   function rangeHasClosed(start,end){
     if(!start||!end) return false;
