@@ -37,9 +37,11 @@
     listings: "/api/listings",
     availability: "/api/availability",
     calendar: "/api/calendar",
+    images: "/api/images",
     quote: "/api/quote",
     book: "/api/book",
-    config: "/config"
+    config: "/config",
+    paymentProvider: "/payment-provider"
   };
 
   window.TC = Object.assign(window.TC || {}, {
@@ -81,4 +83,12 @@
 
     CLEANING_PER_HOUSE: 650
   });
+
+  if (/\/stays\//.test(location.pathname) && !document.querySelector('script[data-property-images]')) {
+    const script = document.createElement("script");
+    script.src = "../assets/property-images.js?v=1";
+    script.defer = true;
+    script.dataset.propertyImages = "1";
+    document.body.appendChild(script);
+  }
 })();
