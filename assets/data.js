@@ -86,13 +86,17 @@
 
   const assetPrefix = /\/stays\//.test(location.pathname) ? "../" : "";
 
-  if (!document.querySelector('link[data-schedule-popup]')) {
+  function loadCssOnce(href, attrName) {
+    if (document.querySelector(`link[${attrName}]`)) return;
     const css = document.createElement("link");
     css.rel = "stylesheet";
-    css.href = assetPrefix + "assets/schedule-popup.css?v=5";
-    css.dataset.schedulePopup = "1";
+    css.href = href;
+    css.setAttribute(attrName, "1");
     document.head.appendChild(css);
   }
+
+  loadCssOnce(assetPrefix + "assets/schedule-popup.css?v=6", "data-schedule-popup");
+  loadCssOnce(assetPrefix + "assets/mobile-fixes.css?v=1", "data-mobile-fixes");
 
   function loadScriptOnce(src, attrName) {
     if (document.querySelector(`script[${attrName}]`)) return;
@@ -108,5 +112,5 @@
   }
 
   // Single source of truth: this includes Fletschhorn-style date modal + routing interception.
-  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=6", "data-schedule-popup");
+  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=7", "data-schedule-popup");
 })();
