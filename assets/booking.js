@@ -5,37 +5,59 @@
 (function () {
   const D = window.TC;
   const root = document.getElementById("booking-root");
-  if (!root) return;
+  if (!D || !root) return;
 
   const params = new URLSearchParams(location.search);
+  const toInt = (value, fallback) => {
+    const n = parseInt(value, 10);
+    return Number.isFinite(n) ? n : fallback;
+  };
+
   const state = {
-    ids: (params.get("ids") || D.PROPERTIES[0].id).split(",").filter(Boolean),
-    isEvent: false,
-    checkIn: "", checkOut: "",
-    adults: 2, children: 0, pets: 0,
+    ids: (params.get("ids") || (D.PROPERTIES[0]?.id || "")).split(",").filter(Boolean),
+    isEvent: params.get("event") === "1",
+    checkIn: params.get("checkIn") || "",
+    checkOut: params.get("checkOut") || "",
+    adults: toInt(params.get("adults"), 2),
+    children: toInt(params.get("children"), 0),
+    pets: toInt(params.get("pets"), 0),
     email: "", eventType: "Wedding", message: "",
   };
 
-  const fmt = (n) => "$" + n.toLocaleString();
+  const fmt = (n) => "$" + Number(n || 0).toLocaleString();
   const nights = () => {
     if (!state.checkIn || !state.checkOut) return 0;
     return Math.max(0, Math.round((new Date(state.checkOut) - new Date(state.checkIn)) / 86400000));
   };
+  const ensureSelection = () => {
+    const valid = new Set(D.PROPERTIES.map((p) => p.id));
+    state.ids = state.ids.filter((id) => valid.has(id));
+    if (!state.ids.length && D.PROPERTIES[0]) state.ids = [D.PROPERTIES[0].id];
+  };
   const selected = () => D.PROPERTIES.filter((p) => state.ids.includes(p.id));
-  const capacity = () => selected().reduce((n, p) => n + p.guests, 0);
-  const minNights = () => Math.max(...selected().map((p) => p.minNights), 2);
-  const lodging = () => nights() * selected().reduce((n, p) => n + p.nightlyFrom, 0);
+  const capacity = () => selected().reduce((n, p) => n + (p.guests || 0), 0);
+  const minNights = () => Math.max(2, ...selected().map((p) => p.minNights || 2));
+  const lodging = () => nights() * selected().reduce((n, p) => n + (p.nightlyFrom || 0), 0);
   const cleaning = () => D.CLEANING_PER_HOUSE * selected().length;
   const total = () => lodging() + cleaning();
   const emailOk = () => /\S+@\S+\.\S+/.test(state.email);
   const ready = () => selected().length && nights() >= minNights() && emailOk();
 
+  function photoStyle(p, height) {
+    const base = `height:${height};border-radius:.5rem;display:block`;
+    if (p.image) {
+      return `${base};background-image:url('${String(p.image).replace(/'/g, "%27")}');background-size:cover;background-position:center`;
+    }
+    return `${base};--g1:${p.g1 || "#3a3f49"};--g2:${p.g2 || "#16181d"}`;
+  }
+
   function render() {
+    ensureSelection();
     const n = nights();
-    const heads = selected().map((p) => p.name).join(" + ");
     root.innerHTML = `
       <a href="index.html" class="inline-flex items-center gap-2 text-sm py-3" style="text-decoration:none">&larr; Back</a>
       <h1 class="font-serif" style="font-size:2rem;margin:.2rem 0">${state.isEvent ? "Plan your celebration" : "Confirm and book"}</h1>
+      ${D.PROPERTIES_LIVE ? `<p class="text-sm text-stone-500">Live Guesty data is connected.</p>` : `<p class="text-sm text-stone-500">Static preview mode. Connect the Cloudflare Worker for live Guesty availability and booking.</p>`}
       ${state.isEvent ? `<p style="color:#57534e;font-size:.95rem;max-width:40rem">One house for an intimate weekend — or all four side-by-side mansions, so every guest wakes up on the same hillside.</p>` : ""}
       <div class="bk-grid">
         <div>
@@ -45,8 +67,8 @@
               ${D.PROPERTIES.map((p) => {
                 const on = state.ids.includes(p.id);
                 return `<button class="bk-prop ${on ? "on" : ""}" data-id="${p.id}">
-                  <span class="photo" style="--g1:${p.g1};--g2:${p.g2};height:54px;border-radius:.5rem;display:block"></span>
-                  <span class="bk-prop-row"><span><b>${p.name}</b><small> · sleeps ${p.guests}</small></span>
+                  <span class="photo" style="${photoStyle(p, "54px")}"></span>
+                  <span class="bk-prop-row"><span><b>${p.name}</b><small>${p.guests ? ` · sleeps ${p.guests}` : ""}</small></span>
                   <span class="check">${on ? "&#10003;" : ""}</span></span>
                 </button>`;
               }).join("")}
@@ -96,7 +118,7 @@
           <div class="bk-summary">
             <h3>${state.isEvent ? "Your celebration" : "Your stay"}</h3>
             <div class="bk-lines">
-              ${selected().map((p) => `<div class="line"><span>${p.name}${n ? ` × ${n} nights` : ""}</span><span>${n ? fmt(p.nightlyFrom * n) : fmt(p.nightlyFrom) + "/n"}</span></div>`).join("")}
+              ${selected().map((p) => `<div class="line"><span>${p.name}${n ? ` × ${n} nights` : ""}</span><span>${n && p.nightlyFrom ? fmt(p.nightlyFrom * n) : p.nightlyFrom ? fmt(p.nightlyFrom) + "/n" : "Quote"}</span></div>`).join("")}
               ${n >= minNights() && selected().length ? `
                 <div class="line"><span>Cleaning (${selected().length} house${selected().length > 1 ? "s" : ""})</span><span>${fmt(cleaning())}</span></div>
                 <div class="line total"><span>Total before taxes</span><span>${fmt(total())}</span></div>` : ""}
@@ -128,9 +150,12 @@
       render();
     });
     root.querySelectorAll("[data-inc]").forEach((b) => b.onclick = () => { state[b.dataset.inc]++; render(); });
-    root.querySelectorAll("[data-dec]").forEach((b) => b.onclick = () => { state[b.dataset.dec] = Math.max(0, state[b.dataset.dec] - 1); render(); });
+    root.querySelectorAll("[data-dec]").forEach((b) => b.onclick = () => {
+      const min = b.dataset.dec === "adults" ? 1 : 0;
+      state[b.dataset.dec] = Math.max(min, state[b.dataset.dec] - 1);
+      render();
+    });
     root.querySelectorAll("[data-occ]").forEach((b) => b.onclick = () => { state.eventType = b.dataset.occ; render(); });
-    const mk = root.querySelector("[data-makeevent]"); if (mk) mk.onclick = () => { state.isEvent = true; render(); };
     const ci = root.querySelector("#ci"); if (ci) ci.onchange = (e) => { state.checkIn = e.target.value; render(); };
     const co = root.querySelector("#co"); if (co) co.onchange = (e) => { state.checkOut = e.target.value; render(); };
     const em = root.querySelector("#email"); if (em) em.oninput = (e) => { state.email = e.target.value; document.getElementById("submit").disabled = !ready(); };
@@ -140,6 +165,7 @@
 
   async function submit() {
     const payload = {
+      source: "timbercrest-static-shell",
       propertyIds: state.ids,
       listingIds: selected().map((p) => p.listingId).filter(Boolean),
       checkIn: state.checkIn, checkOut: state.checkOut,
@@ -148,9 +174,23 @@
       eventType: state.isEvent ? state.eventType : null,
       message: state.message || null, totalQuoted: total(),
     };
+
     let live = false;
-    if (D.WORKER_URL) {
-      try { const r = await fetch(D.WORKER_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); live = r.ok; } catch (e) {}
+    let redirectUrl = "";
+    const url = typeof D.apiUrl === "function" ? D.apiUrl("book") : D.WORKER_URL;
+    if (url) {
+      try {
+        const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const data = await r.json().catch(() => ({}));
+        live = r.ok;
+        redirectUrl = data.redirectUrl || data.url || "";
+      } catch (e) {
+        live = false;
+      }
+    }
+    if (redirectUrl) {
+      location.href = redirectUrl;
+      return;
     }
     done(live);
   }
@@ -173,5 +213,6 @@
       </div>`;
   }
 
+  document.addEventListener("tc:properties-ready", render);
   render();
 })();
