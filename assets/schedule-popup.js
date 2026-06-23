@@ -34,6 +34,7 @@
   const monthEnd=d=>new Date(d.getFullYear(),d.getMonth()+1,0);
   const money=(v,c="USD")=>v!==null&&v!==undefined&&v!==""&&!Number.isNaN(Number(v))?new Intl.NumberFormat("en-US",{style:"currency",currency:c,maximumFractionDigits:0}).format(Number(v)):"";
   const fmtDate=s=>s?new Date(s+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"—";
+  const fmtShort=s=>s?new Date(s+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"}):"—";
 
   const store={};
   let modal=null,scrim=null;
@@ -43,7 +44,7 @@
     if(!document.querySelector('link[data-schedule-popup]')){
       const css=document.createElement("link");
       css.rel="stylesheet";
-      css.href=(isStay()?"../":"")+"assets/schedule-popup.css?v=3";
+      css.href=(isStay()?"../":"")+"assets/schedule-popup.css?v=5";
       css.dataset.schedulePopup="1";
       document.head.appendChild(css);
     }
@@ -51,6 +52,7 @@
 
   function selectedProps(){return state.ids.map(byId).filter(Boolean);}
   function selectedSearchIds(){return $$(".tcsearch-opt.on[data-id]").map(x=>x.dataset.id).filter(Boolean);}
+  function selectedCheckoutIds(){return isBooking()?$$('.bk-prop.on[data-id]').map(x=>x.dataset.id).filter(Boolean):[];}
   function allIds(){return props().map(p=>p.id).filter(Boolean);}
   function hrefIds(href){
     try{
@@ -62,6 +64,8 @@
     return [];
   }
   function contextIds(){
+    const checkout=selectedCheckoutIds();
+    if(checkout.length) return checkout;
     const q=new URLSearchParams(location.search);
     const ids=(q.get("ids")||"").split(",").filter(Boolean);
     if(ids.length) return ids;
@@ -153,23 +157,24 @@
   }
   function render(){
     const n=selectedNights();
+    const hasMany=state.mode==="combined";
     modal.innerHTML=`
       <div class="tc-cal-head">
-        <div><div class="tc-cal-kicker">Schedule</div><h2 class="tc-cal-title">${esc(headerTitle())}</h2><p class="tc-cal-sub">${state.mode==="combined"?"Each color is one mansion. Pick dates before checkout.":"Live availability and nightly prices from Guesty."}</p></div>
+        <div><div class="tc-cal-kicker">Schedule</div><h2 class="tc-cal-title">${esc(headerTitle())}</h2><p class="tc-cal-sub">${hasMany?"Colors show each selected mansion. Light grey means at least one selected mansion is not open.":"Live availability and nightly prices from Guesty."}</p></div>
         <button class="tc-cal-x" type="button" aria-label="Close">×</button>
       </div>
       <div class="tc-cal-body">
         <aside class="tc-cal-side">
           ${legend()}
           <div class="tc-cal-range"><b>Your dates</b><div>${fmtDate(state.checkIn)} → ${fmtDate(state.checkOut)}</div>${n?`<div class="tc-cal-legend-small">${n} night${n>1?"s":""}</div>`:`<div class="tc-cal-legend-small">Click a check-in date, then checkout date.</div>`}</div>
-          <div class="tc-cal-note">Prices appear inside available dates. Grey dates are booked or blocked. In combined mode, filled color bars show which houses are available.</div>
+          <div class="tc-cal-note">Prices appear inside available dates. In combined mode, the price is the selected mansions together for that night.</div>
           ${state.error?`<div class="tc-cal-error">${esc(state.error)}</div>`:""}
           <div class="tc-cal-actions"><button class="tc-cal-btn primary" data-apply ${state.checkIn&&state.checkOut?"":"disabled"}>Continue with dates</button><button class="tc-cal-btn secondary" data-clear>Clear dates</button></div>
         </aside>
         <main class="tc-cal-main">${calendarHtml()}</main>
       </div>`;
     $(".tc-cal-x",modal).onclick=close;
-    $("[data-clear]",modal).onclick=()=>{state.checkIn="";state.checkOut="";render();};
+    $("[data-clear]",modal).onclick=()=>{state.checkIn="";state.checkOut="";state.error="";render();};
     $("[data-apply]",modal).onclick=applyDates;
     $$('[data-cal-nav]',modal).forEach(b=>b.onclick=()=>{state.month=new Date(state.month.getFullYear(),state.month.getMonth()+Number(b.dataset.calNav),1);loadMonth();});
     $$('[data-date]',modal).forEach(b=>b.onclick=()=>selectDate(b.dataset.date));
@@ -192,22 +197,26 @@
     const rows=selectedProps().map(p=>({p,day:(state.data[p.id]||{})[date]||null}));
     const open=rows.filter(x=>x.day&&!x.day.unavailable&&x.day.available!==false);
     const prices=open.map(x=>Number(x.day.price)).filter(v=>Number.isFinite(v)&&v>0);
-    return {rows,open,price:prices.length?Math.min(...prices):null,allOpen:rows.length>0&&open.length===rows.length};
+    const allOpen=rows.length>0&&open.length===rows.length;
+    const partial=state.mode==="combined"&&open.length>0&&!allOpen;
+    const noneOpen=rows.length>0&&open.length===0;
+    const price=state.mode==="combined"?(prices.length?prices.reduce((a,b)=>a+b,0):null):(prices.length?Math.min(...prices):null);
+    return {rows,open,price,allOpen,partial,noneOpen};
   }
   function inRange(date){return state.checkIn&&state.checkOut&&date>state.checkIn&&date<state.checkOut;}
   function dayCell(date,out){
     const d=new Date(date+"T00:00:00");
     const info=infoForDate(date);
     const past=date<todayIso();
-    const disabled=out||past||(state.mode!=="combined"&&!info.allOpen);
+    const disabled=out||past||!info.allOpen;
     const selected=date===state.checkIn||date===state.checkOut;
     const price=info.price?money(info.price,(info.open[0]&&info.open[0].day.currency)||"USD"):"";
-    const status=state.mode==="combined"?(info.allOpen?"All open":info.open.length?`${info.open.length}/${info.rows.length} open`:"Booked"):(info.allOpen?"Available":"Booked");
+    const status=state.mode==="combined"?(info.allOpen?"All open":info.partial?`${info.open.length}/${info.rows.length} open`:"Booked"):(info.allOpen?"Available":"Booked");
     const bars=state.mode==="combined"?`<div class="tc-cal-bars">${info.rows.map(x=>`<span class="tc-cal-bar ${x.day&&!x.day.unavailable&&x.day.available!==false?"open":""}" style="--tc-color:${COLORS[x.p.id]||x.p.g1||"#1c1917"}"></span>`).join("")}</div>`:"";
-    return `<button type="button" class="tc-cal-day ${out?"out":""} ${disabled?"unavailable":""} ${selected?"selected":""} ${inRange(date)?"in-range":""}" data-date="${date}" ${out?"tabindex='-1'":""}><span class="tc-cal-date">${d.getDate()}</span>${price?`<span class="tc-cal-price">${price}</span>`:""}<span class="tc-cal-status">${past?"Past":status}</span>${bars}</button>`;
+    return `<button type="button" class="tc-cal-day ${out?"out":""} ${disabled?"unavailable":""} ${info.partial?"partial":""} ${selected?"selected":""} ${inRange(date)?"in-range":""}" data-date="${date}" ${disabled?"aria-disabled='true'":""} ${out?"tabindex='-1'":""}><span class="tc-cal-date">${d.getDate()}</span>${price?`<span class="tc-cal-price">${price}</span>`:""}<span class="tc-cal-status">${past?"Past":status}</span>${bars}</button>`;
   }
   function rangeHasClosed(start,end){
-    if(!start||!end||state.mode==="combined") return false;
+    if(!start||!end) return false;
     for(let d=new Date(start+"T00:00:00");d<new Date(end+"T00:00:00");d.setDate(d.getDate()+1)){
       const iso=toIso(d);
       if(!infoForDate(iso).allOpen) return true;
@@ -217,14 +226,18 @@
   function selectDate(date){
     if(date<todayIso()) return;
     const info=infoForDate(date);
-    if(state.mode!=="combined"&&!info.allOpen) return;
+    if(!info.allOpen){
+      state.error=state.mode==="combined"?"At least one selected mansion is unavailable on that date. Choose a fully open date.":"That date is unavailable. Please choose another date.";
+      render();
+      return;
+    }
     if(!state.checkIn||state.checkOut||date<=state.checkIn){
       state.checkIn=date;
       state.checkOut="";
       state.error="";
     }else{
       if(rangeHasClosed(state.checkIn,date)){
-        state.error="One or more selected nights is unavailable. Please choose another range.";
+        state.error=state.mode==="combined"?"At least one selected mansion is unavailable inside that range. Please choose another range.":"One or more selected nights is unavailable. Please choose another range.";
         state.checkOut="";
       }else{
         state.checkOut=date;
@@ -273,10 +286,11 @@
   }
 
   function openFromTarget(target){
-    const explicit=target.closest&&target.closest("[data-tc-schedule],[data-tc-open-schedule]");
+    const explicit=target.closest&&target.closest("[data-tc-schedule],[data-tc-open-schedule],[data-tc-checkout-schedule]");
     if(explicit){
       const ids=(explicit.dataset.ids||"").split(",").filter(Boolean);
-      openCalendar({ids:ids.length?ids:contextIds(),mode:explicit.dataset.mode||null});
+      const picked=ids.length?ids:contextIds();
+      openCalendar({ids:picked,mode:explicit.dataset.mode||(picked.length>1||new URLSearchParams(location.search).get("event")==="1"?"combined":"single")});
       return true;
     }
     const when=target.closest&&target.closest('.tcsearch-seg[data-seg="when"],.tcsearch-pane[data-pane="when"] [data-tc-open-schedule]');
@@ -327,26 +341,39 @@
       pane.appendChild(btn);
     });
   }
-  function injectCheckoutButton(){
+
+  function ensureCheckoutButton(){
     if(!isBooking()) return;
-    const timer=setInterval(()=>{
-      replaceOldDateInputs();
-      const h=$$(".bk-sec h2").find(x=>/date/i.test(x.textContent));
-      if(!h||document.querySelector('[data-tc-checkout-schedule]')) return;
-      const btn=document.createElement("button");
-      btn.type="button";
-      btn.className="tc-cal-open";
-      btn.dataset.tcCheckoutSchedule="1";
-      btn.textContent=new URLSearchParams(location.search).get("event")==="1"?"Open combined mansion calendar":"Open calendar with prices";
-      btn.onclick=function(){const ids=contextIds();openCalendar({ids,mode:ids.length>1?"combined":"single"});};
-      h.insertAdjacentElement("afterend",btn);
-      clearInterval(timer);
-    },200);
-    setTimeout(()=>clearInterval(timer),6000);
+    replaceOldDateInputs();
+    const h=$$(".bk-sec h2").find(x=>/date/i.test(x.textContent));
+    if(!h) return;
+    const sec=h.closest(".bk-sec");
+    if(!sec) return;
+    sec.classList.add("tc-cal-booking-sec");
+    const ids=contextIds();
+    const q=new URLSearchParams(location.search);
+    const label=ids.length>1?`Live schedule for ${ids.length} mansions`:"Live schedule for this mansion";
+    const dateText=q.get("checkIn")&&q.get("checkOut")?`${fmtShort(q.get("checkIn"))} → ${fmtShort(q.get("checkOut"))}`:"No dates selected";
+    let box=sec.querySelector('[data-tc-checkout-schedule]');
+    if(!box){
+      box=document.createElement("div");
+      box.className="tc-cal-checkout-control";
+      box.dataset.tcCheckoutSchedule="1";
+      h.insertAdjacentElement("afterend",box);
+    }
+    box.dataset.mode=(ids.length>1||q.get("event")==="1")?"combined":"single";
+    box.innerHTML=`<button type="button" class="tc-cal-open tc-cal-open--checkout" data-tc-open-schedule>${q.get("event")==="1"||ids.length>1?"Open combined mansion schedule":"Open live schedule"}</button><span><b>${esc(label)}</b><small>${esc(dateText)}</small></span>`;
   }
 
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{replaceOldDateInputs();injectCheckoutButton();});
-  else{replaceOldDateInputs();injectCheckoutButton();}
-  document.addEventListener("tc:properties-ready",()=>{replaceOldDateInputs();});
-  new MutationObserver(()=>replaceOldDateInputs()).observe(document.documentElement,{childList:true,subtree:true});
+  function startCheckoutInjection(){
+    if(!isBooking()) return;
+    ensureCheckoutButton();
+    const timer=setInterval(ensureCheckoutButton,200);
+    setTimeout(()=>clearInterval(timer),7000);
+  }
+
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{replaceOldDateInputs();startCheckoutInjection();});
+  else{replaceOldDateInputs();startCheckoutInjection();}
+  document.addEventListener("tc:properties-ready",()=>{replaceOldDateInputs();ensureCheckoutButton();});
+  new MutationObserver(()=>{replaceOldDateInputs();ensureCheckoutButton();}).observe(document.documentElement,{childList:true,subtree:true});
 })();
