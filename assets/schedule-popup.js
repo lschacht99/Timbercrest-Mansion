@@ -1,7 +1,16 @@
-/* Timbercrest schedule popup — Worker-backed availability + prices. */
+/* Timbercrest schedule popup — Fletschhorn-style Worker calendar.
+   - Property pages: opens one-property calendar by page slug/listing.
+   - Booking/event pages: opens combined calendar with property color bars.
+   - Uses Worker /api/calendar and pushes selected dates into booking.html. */
 (function(){
+  if(window.__TC_SCHEDULE_POPUP_READY) return;
+  window.__TC_SCHEDULE_POPUP_READY=true;
+
   const D=window.TC;
-  if(!D||typeof D.apiUrl!=="function") return;
+  if(!D||typeof D.apiUrl!=="function"){
+    console.warn("Timbercrest schedule: window.TC/apiUrl not ready.");
+    return;
+  }
 
   const COLORS={
     "the-birch":"#54687a",
@@ -11,163 +20,333 @@
   };
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const money=v=>v?"$"+Number(v).toLocaleString():"";
-  const ymd=d=>d.toISOString().slice(0,10);
+  const esc=v=>String(v??"").replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'\"':"&quot;","'":"&#39;"}[c]));
+  const props=()=>Array.isArray(D.PROPERTIES)&&D.PROPERTIES.length?D.PROPERTIES:(D.PROPERTIES_FALLBACK||[]);
+  const byId=id=>props().find(p=>p.id===id)||null;
+  const isStay=()=>/\/stays\//.test(location.pathname);
+  const isBooking=()=>/booking\.html$/i.test(location.pathname);
+  const slug=()=> (location.pathname.split("/").pop()||"").replace(/\.html$/i,"");
+  const baseBooking=()=>isStay()?"../booking.html":"booking.html";
+  const todayIso=()=>{const d=new Date();d.setHours(0,0,0,0);return toIso(d);};
+  const toIso=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10);};
   const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
   const monthStart=d=>new Date(d.getFullYear(),d.getMonth(),1);
   const monthEnd=d=>new Date(d.getFullYear(),d.getMonth()+1,0);
+  const money=(v,c="USD")=>v!==null&&v!==undefined&&v!==""&&!Number.isNaN(Number(v))?new Intl.NumberFormat("en-US",{style:"currency",currency:c,maximumFractionDigits:0}).format(Number(v)):"";
   const fmtDate=s=>s?new Date(s+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"—";
-  const props=()=>Array.isArray(D.PROPERTIES)&&D.PROPERTIES.length?D.PROPERTIES:D.PROPERTIES_FALLBACK||[];
-  const byId=id=>props().find(p=>p.id===id);
-  const currentSlug=()=> (location.pathname.split("/").pop()||"").replace(/\.html$/i,"");
-  const isBooking=()=>/booking\.html$/i.test(location.pathname);
-  const isStay=()=>/\/stays\//.test(location.pathname);
-  const baseBooking=()=>isStay()?"../booking.html":"booking.html";
 
-  let modal,scrim;
-  let state={month:monthStart(new Date()),ids:[],mode:"single",checkIn:"",checkOut:"",loading:false,error:"",data:{}};
-  const cache=new Map();
+  const store={};
+  let modal=null,scrim=null;
+  let state={ids:[],mode:"single",month:monthStart(new Date()),checkIn:"",checkOut:"",loading:false,error:"",data:{}};
+
+  function ensureAssets(){
+    if(!document.querySelector('link[data-schedule-popup]')){
+      const css=document.createElement("link");
+      css.rel="stylesheet";
+      css.href=(isStay()?"../":"")+"assets/schedule-popup.css?v=3";
+      css.dataset.schedulePopup="1";
+      document.head.appendChild(css);
+    }
+  }
 
   function selectedProps(){return state.ids.map(byId).filter(Boolean);}
-  function getIdsFromUrl(){
+  function selectedSearchIds(){return $$(".tcsearch-opt.on[data-id]").map(x=>x.dataset.id).filter(Boolean);}
+  function allIds(){return props().map(p=>p.id).filter(Boolean);}
+  function hrefIds(href){
+    try{
+      const u=new URL(href,location.href);
+      const ids=(u.searchParams.get("ids")||"").split(",").filter(Boolean);
+      if(ids.length) return ids;
+      if(u.searchParams.get("event")==="1") return allIds();
+    }catch(_){ }
+    return [];
+  }
+  function contextIds(){
     const q=new URLSearchParams(location.search);
     const ids=(q.get("ids")||"").split(",").filter(Boolean);
     if(ids.length) return ids;
-    if(isStay()) return [currentSlug()].filter(Boolean);
-    if(q.get("event")==="1") return props().map(p=>p.id);
-    return [(props()[0]||{}).id].filter(Boolean);
+    const picked=selectedSearchIds();
+    if(picked.length) return picked;
+    if(q.get("event")==="1") return allIds();
+    if(isStay()) return [slug()].filter(Boolean);
+    return allIds();
+  }
+
+  function normalizeDay(item){
+    if(!item||typeof item!=="object") return null;
+    const date=String(item.date||item.day||item.dateString||item.startDate||item._id||"").slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+    const status=String(item.status||item.availability||"").toLowerCase();
+    const unavailable=item.available===false||item.isAvailable===false||status==="unavailable"||status==="booked"||status==="blocked"||status==="reserved";
+    const available=!unavailable&&(item.available===true||item.isAvailable===true||status==="available"||status==="open"||status==="selectable"||status==="");
+    const price=item.price??item.nightlyPrice??item.basePrice??item.rate??item.amount??item.totalPrice??null;
+    return {date,available:available&&!unavailable,unavailable,price,currency:item.currency||D.CURRENCY||"USD",status:item.status||item.availability||(available?"available":"booked"),minNights:item.minNights||item.minimumStay||item.minStay||null};
+  }
+  function collectDays(data){
+    const found=[];
+    function walk(v){
+      if(!v||typeof v!=="object") return;
+      if(Array.isArray(v)){v.forEach(walk);return;}
+      const day=normalizeDay(v);
+      if(day) found.push(day);
+      Object.keys(v).forEach(k=>walk(v[k]));
+    }
+    if(data&&Array.isArray(data.days)) data.days.forEach(d=>{const x=normalizeDay(d);if(x)found.push(x);});
+    else walk(data);
+    return found;
   }
 
   function ensureShell(){
-    if(scrim&&modal) return;
-    scrim=document.createElement("div");scrim.className="tc-cal-scrim";
-    modal=document.createElement("div");modal.className="tc-cal-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");
+    ensureAssets();
+    if(modal&&scrim) return;
+    scrim=document.createElement("div");
+    scrim.className="tc-cal-scrim";
+    modal=document.createElement("div");
+    modal.className="tc-cal-modal";
+    modal.setAttribute("role","dialog");
+    modal.setAttribute("aria-modal","true");
     document.body.append(scrim,modal);
     scrim.addEventListener("click",close);
     document.addEventListener("keydown",e=>{if(e.key==="Escape")close();});
   }
-  function open(opts={}){
+
+  function openCalendar(opts={}){
     ensureShell();
     const q=new URLSearchParams(location.search);
+    const ids=(opts.ids&&opts.ids.length?opts.ids:contextIds()).filter(Boolean);
+    const checkIn=opts.checkIn||q.get("checkIn")||"";
+    const d=checkIn?new Date(checkIn+"T00:00:00"):new Date();
     state={
-      month:monthStart(opts.month||new Date(q.get("checkIn")||Date.now())),
-      ids:opts.ids&&opts.ids.length?opts.ids:getIdsFromUrl(),
-      mode:opts.mode||((opts.ids&&opts.ids.length>1)||q.get("event")==="1"?"combined":"single"),
-      checkIn:q.get("checkIn")||opts.checkIn||"",
-      checkOut:q.get("checkOut")||opts.checkOut||"",
-      loading:false,error:"",data:{}
+      ids,
+      mode:opts.mode||((ids.length>1||q.get("event")==="1")?"combined":"single"),
+      month:monthStart(isNaN(d.getTime())?new Date():d),
+      checkIn,
+      checkOut:opts.checkOut||q.get("checkOut")||"",
+      loading:false,
+      error:"",
+      data:{}
     };
     render();
-    scrim.classList.add("open");modal.classList.add("open");document.documentElement.style.overflow="hidden";
+    scrim.classList.add("open");
+    modal.classList.add("open");
+    document.documentElement.style.overflow="hidden";
     loadMonth();
   }
-  function close(){if(!modal)return;scrim.classList.remove("open");modal.classList.remove("open");document.documentElement.style.overflow="";}
-  window.TC_OPEN_SCHEDULE=open;
-
-  function title(){
-    const names=selectedProps().map(p=>p.name);
-    if(state.mode==="combined") return "Combined mansion availability";
-    return names[0]?names[0]+" availability":"Availability";
+  function close(){
+    if(!modal) return;
+    scrim.classList.remove("open");
+    modal.classList.remove("open");
+    document.documentElement.style.overflow="";
   }
-  function subtitle(){
-    return state.mode==="combined"?"Each color is one mansion. Prices and status come from the cached Guesty calendar.":"Live dates and nightly prices from Guesty.";
+  window.TC_OPEN_SCHEDULE=openCalendar;
+
+  function headerTitle(){
+    const names=selectedProps().map(p=>p.name);
+    return state.mode==="combined"?"Combined mansion availability":(names[0]?names[0]+" availability":"Availability");
   }
   function legend(){
-    return selectedProps().map(p=>`<div class="tc-cal-pill"><span class="tc-cal-dot" style="--tc-color:${COLORS[p.id]||p.g1||'#1c1917'}"></span><span>${esc(p.name)}</span></div>`).join("");
+    return selectedProps().map(p=>`<div class="tc-cal-pill"><span class="tc-cal-dot" style="--tc-color:${COLORS[p.id]||p.g1||"#1c1917"}"></span><span>${esc(p.name)}</span></div>`).join("");
   }
-  function rangeBox(){
-    const n=state.checkIn&&state.checkOut?Math.max(0,(new Date(state.checkOut)-new Date(state.checkIn))/86400000):0;
-    return `<div class="tc-cal-range"><b>Your dates</b><div>${fmtDate(state.checkIn)} → ${fmtDate(state.checkOut)}</div>${n?`<div class="tc-cal-legend-small">${n} night${n>1?"s":""}</div>`:"<div class="tc-cal-legend-small">Click a check-in date, then a checkout date.</div>"}</div>`;
+  function selectedNights(){
+    if(!state.checkIn||!state.checkOut) return 0;
+    return Math.max(0,Math.round((new Date(state.checkOut)-new Date(state.checkIn))/86400000));
   }
   function render(){
-    const m=state.month;
+    const n=selectedNights();
     modal.innerHTML=`
-      <div class="tc-cal-head"><div><div class="tc-cal-kicker">Schedule</div><h2 class="tc-cal-title">${esc(title())}</h2><p class="tc-cal-sub">${esc(subtitle())}</p></div><button class="tc-cal-x" type="button" aria-label="Close">×</button></div>
-      <div class="tc-cal-body"><aside class="tc-cal-side">${legend()}${rangeBox()}<div class="tc-cal-note">Available days show a price. Grey days are booked or blocked. In combined mode, filled color bars show which mansions are open that day.</div><div class="tc-cal-actions"><button class="tc-cal-btn primary" data-cal-apply ${state.checkIn&&state.checkOut?"":"disabled"}>Continue with dates</button><button class="tc-cal-btn secondary" data-cal-clear>Clear dates</button></div></aside><main class="tc-cal-main">${calendarHtml(m)}</main></div>`;
+      <div class="tc-cal-head">
+        <div><div class="tc-cal-kicker">Schedule</div><h2 class="tc-cal-title">${esc(headerTitle())}</h2><p class="tc-cal-sub">${state.mode==="combined"?"Each color is one mansion. Pick dates before checkout.":"Live availability and nightly prices from Guesty."}</p></div>
+        <button class="tc-cal-x" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="tc-cal-body">
+        <aside class="tc-cal-side">
+          ${legend()}
+          <div class="tc-cal-range"><b>Your dates</b><div>${fmtDate(state.checkIn)} → ${fmtDate(state.checkOut)}</div>${n?`<div class="tc-cal-legend-small">${n} night${n>1?"s":""}</div>`:`<div class="tc-cal-legend-small">Click a check-in date, then checkout date.</div>`}</div>
+          <div class="tc-cal-note">Prices appear inside available dates. Grey dates are booked or blocked. In combined mode, filled color bars show which houses are available.</div>
+          ${state.error?`<div class="tc-cal-error">${esc(state.error)}</div>`:""}
+          <div class="tc-cal-actions"><button class="tc-cal-btn primary" data-apply ${state.checkIn&&state.checkOut?"":"disabled"}>Continue with dates</button><button class="tc-cal-btn secondary" data-clear>Clear dates</button></div>
+        </aside>
+        <main class="tc-cal-main">${calendarHtml()}</main>
+      </div>`;
     $(".tc-cal-x",modal).onclick=close;
-    $("[data-cal-clear]",modal).onclick=()=>{state.checkIn="";state.checkOut="";render();};
-    $("[data-cal-apply]",modal).onclick=apply;
-    $$('[data-cal-nav]',modal).forEach(b=>b.onclick=()=>{state.month=new Date(m.getFullYear(),m.getMonth()+Number(b.dataset.calNav),1);render();loadMonth();});
-    $$('[data-date]',modal).forEach(b=>b.onclick=()=>pick(b.dataset.date));
+    $("[data-clear]",modal).onclick=()=>{state.checkIn="";state.checkOut="";render();};
+    $("[data-apply]",modal).onclick=applyDates;
+    $$('[data-cal-nav]',modal).forEach(b=>b.onclick=()=>{state.month=new Date(state.month.getFullYear(),state.month.getMonth()+Number(b.dataset.calNav),1);loadMonth();});
+    $$('[data-date]',modal).forEach(b=>b.onclick=()=>selectDate(b.dataset.date));
   }
-  function calendarHtml(m){
-    const name=m.toLocaleDateString(undefined,{month:"long",year:"numeric"});
-    if(state.loading) return `<div class="tc-cal-toolbar"><div class="tc-cal-month">${name}</div></div><div class="tc-cal-loading">Loading schedule…</div>`;
-    if(state.error) return `<div class="tc-cal-toolbar"><div class="tc-cal-month">${name}</div></div><div class="tc-cal-error">${esc(state.error)}</div>`;
-    const week="SMTWTFS".split("").map(x=>`<span>${x}</span>`).join("");
-    const first=monthStart(m),last=monthEnd(m),gridStart=addDays(first,-first.getDay());
+  function calendarHtml(){
+    const m=state.month;
+    const title=m.toLocaleDateString(undefined,{month:"long",year:"numeric"});
+    if(state.loading) return `<div class="tc-cal-toolbar"><div class="tc-cal-month">${title}</div></div><div class="tc-cal-loading">Loading live calendar…</div>`;
+    const weekdays="SMTWTFS".split("").map(x=>`<span>${x}</span>`).join("");
+    const first=monthStart(m);
+    const gridStart=addDays(first,-first.getDay());
     let cells="";
     for(let i=0;i<42;i++){
-      const d=addDays(gridStart,i),date=ymd(d),out=d.getMonth()!==m.getMonth();
-      cells+=dayCell(date,out);
+      const d=addDays(gridStart,i);
+      cells+=dayCell(toIso(d),d.getMonth()!==m.getMonth());
     }
-    return `<div class="tc-cal-toolbar"><div class="tc-cal-month">${name}</div><div class="tc-cal-nav"><button data-cal-nav="-1">‹</button><button data-cal-nav="1">›</button></div></div><div class="tc-cal-week">${week}</div><div class="tc-cal-grid">${cells}</div>`;
+    return `<div class="tc-cal-toolbar"><div class="tc-cal-month">${title}</div><div class="tc-cal-nav"><button type="button" data-cal-nav="-1">‹</button><button type="button" data-cal-nav="1">›</button></div></div><div class="tc-cal-week">${weekdays}</div><div class="tc-cal-grid">${cells}</div>`;
   }
-  function dayInfo(date){
-    const arr=selectedProps().map(p=>({p,day:(state.data[p.id]||{})[date]}));
-    const open=arr.filter(x=>x.day&&x.day.available!==false&&x.day.status!=="booked"&&x.day.status!=="unavailable");
-    const prices=open.map(x=>Number(x.day.price||0)).filter(Boolean);
-    return {arr,open,price:prices.length?Math.min(...prices):0,allOpen:open.length===arr.length&&arr.length>0};
+  function infoForDate(date){
+    const rows=selectedProps().map(p=>({p,day:(state.data[p.id]||{})[date]||null}));
+    const open=rows.filter(x=>x.day&&!x.day.unavailable&&x.day.available!==false);
+    const prices=open.map(x=>Number(x.day.price)).filter(v=>Number.isFinite(v)&&v>0);
+    return {rows,open,price:prices.length?Math.min(...prices):null,allOpen:rows.length>0&&open.length===rows.length};
   }
-  function isInRange(date){return state.checkIn&&state.checkOut&&date>state.checkIn&&date<state.checkOut;}
+  function inRange(date){return state.checkIn&&state.checkOut&&date>state.checkIn&&date<state.checkOut;}
   function dayCell(date,out){
-    const info=dayInfo(date),d=new Date(date+"T00:00:00").getDate();
-    const sel=date===state.checkIn||date===state.checkOut;
-    const unavailable=state.mode!=="combined"&&!info.allOpen;
-    const status=state.mode==="combined"?(info.allOpen?"All open":info.open.length?`${info.open.length}/${info.arr.length} open`:"Booked"):(info.allOpen?"Available":"Booked");
-    const bars=state.mode==="combined"?`<div class="tc-cal-bars">${info.arr.map(x=>`<span class="tc-cal-bar ${x.day&&x.day.available!==false?'open':''}" style="--tc-color:${COLORS[x.p.id]||x.p.g1||'#1c1917'}"></span>`).join("")}</div>`:"";
-    return `<button type="button" class="tc-cal-day ${out?'out':''} ${unavailable?'unavailable':''} ${sel?'selected':''} ${isInRange(date)?'in-range':''}" data-date="${date}"><span class="tc-cal-date">${d}</span>${info.price?`<span class="tc-cal-price">from ${money(info.price)}</span>`:""}<span class="tc-cal-status">${status}</span>${bars}</button>`;
+    const d=new Date(date+"T00:00:00");
+    const info=infoForDate(date);
+    const past=date<todayIso();
+    const disabled=out||past||(state.mode!=="combined"&&!info.allOpen);
+    const selected=date===state.checkIn||date===state.checkOut;
+    const price=info.price?money(info.price,(info.open[0]&&info.open[0].day.currency)||"USD"):"";
+    const status=state.mode==="combined"?(info.allOpen?"All open":info.open.length?`${info.open.length}/${info.rows.length} open`:"Booked"):(info.allOpen?"Available":"Booked");
+    const bars=state.mode==="combined"?`<div class="tc-cal-bars">${info.rows.map(x=>`<span class="tc-cal-bar ${x.day&&!x.day.unavailable&&x.day.available!==false?"open":""}" style="--tc-color:${COLORS[x.p.id]||x.p.g1||"#1c1917"}"></span>`).join("")}</div>`:"";
+    return `<button type="button" class="tc-cal-day ${out?"out":""} ${disabled?"unavailable":""} ${selected?"selected":""} ${inRange(date)?"in-range":""}" data-date="${date}" ${out?"tabindex='-1'":""}><span class="tc-cal-date">${d.getDate()}</span>${price?`<span class="tc-cal-price">${price}</span>`:""}<span class="tc-cal-status">${past?"Past":status}</span>${bars}</button>`;
   }
-  function pick(date){
-    const info=dayInfo(date);
+  function rangeHasClosed(start,end){
+    if(!start||!end||state.mode==="combined") return false;
+    for(let d=new Date(start+"T00:00:00");d<new Date(end+"T00:00:00");d.setDate(d.getDate()+1)){
+      const iso=toIso(d);
+      if(!infoForDate(iso).allOpen) return true;
+    }
+    return false;
+  }
+  function selectDate(date){
+    if(date<todayIso()) return;
+    const info=infoForDate(date);
     if(state.mode!=="combined"&&!info.allOpen) return;
-    if(!state.checkIn||state.checkOut||date<=state.checkIn){state.checkIn=date;state.checkOut="";}else{state.checkOut=date;}
+    if(!state.checkIn||state.checkOut||date<=state.checkIn){
+      state.checkIn=date;
+      state.checkOut="";
+      state.error="";
+    }else{
+      if(rangeHasClosed(state.checkIn,date)){
+        state.error="One or more selected nights is unavailable. Please choose another range.";
+        state.checkOut="";
+      }else{
+        state.checkOut=date;
+        state.error="";
+      }
+    }
     render();
   }
-  function apply(){
-    const ids=state.ids.join(",");
+  function applyDates(){
+    if(!state.checkIn||!state.checkOut) return;
     const q=new URLSearchParams(location.search);
-    q.set("ids",ids);q.set("checkIn",state.checkIn);q.set("checkOut",state.checkOut);
+    q.set("ids",state.ids.join(","));
+    q.set("checkIn",state.checkIn);
+    q.set("checkOut",state.checkOut);
     if(state.mode==="combined"||q.get("event")==="1") q.set("event","1");
     location.href=baseBooking()+"?"+q.toString();
   }
   async function loadMonth(){
-    state.loading=true;state.error="";render();
-    const from=ymd(monthStart(state.month)),to=ymd(monthEnd(state.month));
+    state.loading=true;
+    state.error="";
+    render();
+    const from=toIso(monthStart(state.month));
+    const to=toIso(monthEnd(state.month));
     try{
       await Promise.all(selectedProps().map(async p=>{
         const key=p.id+"|"+from+"|"+to;
-        if(cache.has(key)){state.data[p.id]=cache.get(key);return;}
-        const url=D.apiUrl("calendar")+"?id="+encodeURIComponent(p.id)+"&from="+from+"&to="+to;
-        const r=await fetch(url,{headers:{Accept:"application/json"},credentials:"omit"});
-        const j=await r.json().catch(()=>({}));
-        if(!r.ok||!j.ok) throw new Error(j.message||j.error||("Calendar "+r.status));
-        const map={};(j.days||[]).forEach(day=>{if(day.date)map[day.date]=day;});
-        cache.set(key,map);state.data[p.id]=map;
+        if(store[key]){state.data[p.id]=store[key];return;}
+        const url=D.apiUrl("calendar")+"?id="+encodeURIComponent(p.id)+"&listingId="+encodeURIComponent(p.listingId||"")+"&from="+from+"&to="+to;
+        const r=await fetch(url,{headers:{Accept:"application/json"},credentials:"omit",cache:"default"});
+        const text=await r.text();
+        let data={};
+        try{data=JSON.parse(text);}catch(_){data={rawText:text};}
+        if(!r.ok||data.ok===false||data.error) throw new Error(data.message||data.error||("Calendar "+r.status));
+        const map={};
+        collectDays(data).forEach(day=>{map[day.date]=day;});
+        store[key]=map;
+        state.data[p.id]=map;
       }));
-    }catch(e){state.error=e.message||"Calendar unavailable.";}
-    state.loading=false;render();
+    }catch(err){
+      console.warn("Timbercrest calendar failed",err);
+      state.error=err.message||"Calendar unavailable.";
+    }finally{
+      state.loading=false;
+      render();
+    }
   }
-  function wire(){
-    document.addEventListener("click",e=>{
-      const explicit=e.target.closest("[data-tc-schedule]");
-      if(explicit){e.preventDefault();open({ids:(explicit.dataset.ids||"").split(",").filter(Boolean),mode:explicit.dataset.mode||"single"});return;}
-      const a=e.target.closest('a[href*="booking.html?ids="]');
-      if(a&&isStay()){e.preventDefault();const url=new URL(a.href,location.href);open({ids:(url.searchParams.get("ids")||currentSlug()).split(",").filter(Boolean),mode:"single"});}
+
+  function openFromTarget(target){
+    const explicit=target.closest&&target.closest("[data-tc-schedule],[data-tc-open-schedule]");
+    if(explicit){
+      const ids=(explicit.dataset.ids||"").split(",").filter(Boolean);
+      openCalendar({ids:ids.length?ids:contextIds(),mode:explicit.dataset.mode||null});
+      return true;
+    }
+    const when=target.closest&&target.closest('.tcsearch-seg[data-seg="when"],.tcsearch-pane[data-pane="when"] [data-tc-open-schedule]');
+    if(when){
+      const ids=contextIds();
+      openCalendar({ids,mode:ids.length>1?"combined":"single"});
+      return true;
+    }
+    const a=target.closest&&target.closest('a[href*="booking.html"],a[href*="../booking.html"]');
+    if(a){
+      const href=a.getAttribute("href")||"";
+      const isBookLink=/booking\.html/.test(href);
+      const isEvent=/event=1/.test(href);
+      const hasIds=/ids=/.test(href);
+      const text=(a.textContent||"").toLowerCase();
+      const shouldOpen=isEvent||hasIds||isStay()||/book|reserve|availability|group stay|plan/.test(text);
+      if(isBookLink&&shouldOpen){
+        const ids=isEvent?allIds():(hrefIds(a.href).length?hrefIds(a.href):contextIds());
+        openCalendar({ids,mode:(isEvent||ids.length>1)?"combined":"single"});
+        return true;
+      }
+    }
+    return false;
+  }
+
+  document.addEventListener("click",function(e){
+    if(openFromTarget(e.target)){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+    }
+  },true);
+
+  function replaceOldDateInputs(){
+    if(!document.getElementById("tc-calendar-old-date-kill")){
+      const style=document.createElement("style");
+      style.id="tc-calendar-old-date-kill";
+      style.textContent='.tcsearch-pane[data-pane="when"] .tcsearch-dates{display:none!important}.tcsearch-pane[data-pane="when"] [data-tc-open-schedule]{display:inline-flex!important}';
+      document.head.appendChild(style);
+    }
+    document.querySelectorAll('.tcsearch-pane[data-pane="when"]').forEach(pane=>{
+      if(pane.querySelector('[data-tc-open-schedule]')) return;
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.className="tc-cal-open";
+      btn.dataset.tcOpenSchedule="1";
+      btn.textContent="Open calendar with prices";
+      pane.appendChild(btn);
     });
-    if(isBooking()) injectCheckoutButton();
   }
   function injectCheckoutButton(){
-    const tries=setInterval(()=>{
-      const h=$$(".bk-sec h2").find(x=>/dates/i.test(x.textContent));
-      if(!h) return;
-      if($("[data-tc-checkout-schedule]")){clearInterval(tries);return;}
-      const btn=document.createElement("button");btn.type="button";btn.className="tc-cal-open";btn.dataset.tcCheckoutSchedule="1";btn.textContent=new URLSearchParams(location.search).get("event")==="1"?"Open combined mansion calendar":"Open calendar with prices";
-      btn.onclick=()=>open({ids:getIdsFromUrl(),mode:(getIdsFromUrl().length>1||new URLSearchParams(location.search).get("event")==="1")?"combined":"single"});
-      h.parentElement.insertBefore(btn,h.nextSibling);clearInterval(tries);
-    },250);
-    setTimeout(()=>clearInterval(tries),5000);
+    if(!isBooking()) return;
+    const timer=setInterval(()=>{
+      replaceOldDateInputs();
+      const h=$$(".bk-sec h2").find(x=>/date/i.test(x.textContent));
+      if(!h||document.querySelector('[data-tc-checkout-schedule]')) return;
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.className="tc-cal-open";
+      btn.dataset.tcCheckoutSchedule="1";
+      btn.textContent=new URLSearchParams(location.search).get("event")==="1"?"Open combined mansion calendar":"Open calendar with prices";
+      btn.onclick=function(){const ids=contextIds();openCalendar({ids,mode:ids.length>1?"combined":"single"});};
+      h.insertAdjacentElement("afterend",btn);
+      clearInterval(timer);
+    },200);
+    setTimeout(()=>clearInterval(timer),6000);
   }
-  wire();
+
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{replaceOldDateInputs();injectCheckoutButton();});
+  else{replaceOldDateInputs();injectCheckoutButton();}
+  document.addEventListener("tc:properties-ready",()=>{replaceOldDateInputs();});
+  new MutationObserver(()=>replaceOldDateInputs()).observe(document.documentElement,{childList:true,subtree:true});
 })();
