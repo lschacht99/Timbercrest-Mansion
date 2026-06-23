@@ -89,24 +89,25 @@
   if (!document.querySelector('link[data-schedule-popup]')) {
     const css = document.createElement("link");
     css.rel = "stylesheet";
-    css.href = assetPrefix + "assets/schedule-popup.css?v=1";
+    css.href = assetPrefix + "assets/schedule-popup.css?v=2";
     css.dataset.schedulePopup = "1";
     document.head.appendChild(css);
   }
 
-  if (/\/stays\//.test(location.pathname) && !document.querySelector('script[data-property-images]')) {
+  function loadScriptOnce(src, key) {
+    if (document.querySelector(`script[data-${key}]`)) return;
     const script = document.createElement("script");
-    script.src = "../assets/property-images.js?v=1";
+    script.src = src;
     script.defer = true;
-    script.dataset.propertyImages = "1";
+    script.dataset[key] = "1";
     document.body.appendChild(script);
   }
 
-  if (!document.querySelector('script[data-schedule-popup]')) {
-    const script = document.createElement("script");
-    script.src = assetPrefix + "assets/schedule-popup.js?v=1";
-    script.defer = true;
-    script.dataset.schedulePopup = "1";
-    document.body.appendChild(script);
+  if (/\/stays\//.test(location.pathname)) {
+    loadScriptOnce("../assets/property-images.js?v=2", "propertyImages");
   }
+
+  // Load this before/alongside the popup so old booking links/date inputs cannot win.
+  loadScriptOnce(assetPrefix + "assets/schedule-routing-fix.js?v=1", "scheduleRoutingFix");
+  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=2", "schedulePopup");
 })();
