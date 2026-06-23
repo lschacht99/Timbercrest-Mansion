@@ -84,11 +84,29 @@
     CLEANING_PER_HOUSE: 650
   });
 
+  const assetPrefix = /\/stays\//.test(location.pathname) ? "../" : "";
+
+  if (!document.querySelector('link[data-schedule-popup]')) {
+    const css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = assetPrefix + "assets/schedule-popup.css?v=1";
+    css.dataset.schedulePopup = "1";
+    document.head.appendChild(css);
+  }
+
   if (/\/stays\//.test(location.pathname) && !document.querySelector('script[data-property-images]')) {
     const script = document.createElement("script");
     script.src = "../assets/property-images.js?v=1";
     script.defer = true;
     script.dataset.propertyImages = "1";
+    document.body.appendChild(script);
+  }
+
+  if (!document.querySelector('script[data-schedule-popup]')) {
+    const script = document.createElement("script");
+    script.src = assetPrefix + "assets/schedule-popup.js?v=1";
+    script.defer = true;
+    script.dataset.schedulePopup = "1";
     document.body.appendChild(script);
   }
 })();
