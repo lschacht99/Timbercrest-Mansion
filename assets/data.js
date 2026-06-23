@@ -89,7 +89,7 @@
   if (!document.querySelector('link[data-schedule-popup]')) {
     const css = document.createElement("link");
     css.rel = "stylesheet";
-    css.href = assetPrefix + "assets/schedule-popup.css?v=3";
+    css.href = assetPrefix + "assets/schedule-popup.css?v=4";
     css.dataset.schedulePopup = "1";
     document.head.appendChild(css);
   }
@@ -108,5 +108,5 @@
   }
 
   // Single source of truth: this includes Fletschhorn-style date modal + routing interception.
-  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=3", "data-schedule-popup");
+  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=4", "data-schedule-popup");
 })();
