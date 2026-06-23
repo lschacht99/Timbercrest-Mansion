@@ -89,7 +89,7 @@
   if (!document.querySelector('link[data-schedule-popup]')) {
     const css = document.createElement("link");
     css.rel = "stylesheet";
-    css.href = assetPrefix + "assets/schedule-popup.css?v=2";
+    css.href = assetPrefix + "assets/schedule-popup.css?v=3";
     css.dataset.schedulePopup = "1";
     document.head.appendChild(css);
   }
@@ -107,7 +107,6 @@
     loadScriptOnce("../assets/property-images.js?v=2", "data-property-images");
   }
 
-  // This capture-layer blocks old redirects and replaces the old useless date inputs.
-  loadScriptOnce(assetPrefix + "assets/schedule-routing-fix.js?v=1", "data-schedule-routing-fix");
-  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=2", "data-schedule-popup");
+  // Single source of truth: this includes Fletschhorn-style date modal + routing interception.
+  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=3", "data-schedule-popup");
 })();
