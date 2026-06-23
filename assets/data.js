@@ -94,20 +94,20 @@
     document.head.appendChild(css);
   }
 
-  function loadScriptOnce(src, key) {
-    if (document.querySelector(`script[data-${key}]`)) return;
+  function loadScriptOnce(src, attrName) {
+    if (document.querySelector(`script[${attrName}]`)) return;
     const script = document.createElement("script");
     script.src = src;
     script.defer = true;
-    script.dataset[key] = "1";
+    script.setAttribute(attrName, "1");
     document.body.appendChild(script);
   }
 
   if (/\/stays\//.test(location.pathname)) {
-    loadScriptOnce("../assets/property-images.js?v=2", "propertyImages");
+    loadScriptOnce("../assets/property-images.js?v=2", "data-property-images");
   }
 
-  // Load this before/alongside the popup so old booking links/date inputs cannot win.
-  loadScriptOnce(assetPrefix + "assets/schedule-routing-fix.js?v=1", "scheduleRoutingFix");
-  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=2", "schedulePopup");
+  // This capture-layer blocks old redirects and replaces the old useless date inputs.
+  loadScriptOnce(assetPrefix + "assets/schedule-routing-fix.js?v=1", "data-schedule-routing-fix");
+  loadScriptOnce(assetPrefix + "assets/schedule-popup.js?v=2", "data-schedule-popup");
 })();
