@@ -3,26 +3,28 @@
    Cloudflare Worker is connected, assets/guesty-client.js replaces
    window.TC.PROPERTIES with live Guesty-normalized data. */
 (function () {
+  const DEFAULT_WORKER_BASE = "https://timbercrest.bookings-e2d.workers.dev";
+
   const fallbackProperties = [
-    { id: "the-timbercrest", listingId: "6968339ab7d735001ca015ba",
+    { id: "the-timbercrest", listingId: "68725a6736508a0012b410e1",
       name: "The Timbercrest", bedrooms: 12, guests: 32, baths: 12.5,
       nightlyFrom: 2450, minNights: 2, pets: "allowed", rating: 4.97, reviews: 86,
       city: "West Dover, Vermont", g1: "#3a3f49", g2: "#16181d",
       href: "stays/the-timbercrest.html",
       blurb: "12BR · Sleeps 32 · Indoor pool · Hot tub" },
-    { id: "the-myrtle", listingId: "",
+    { id: "the-myrtle", listingId: "68725adcd80f8000131efe3f",
       name: "The Myrtle", bedrooms: 7, guests: 18, baths: 4,
       nightlyFrom: 1280, minNights: 2, pets: "fee", rating: 4.92, reviews: 64,
       city: "Dover, Vermont", g1: "#6e5840", g2: "#372a1d",
       href: "stays/the-myrtle.html",
       blurb: "7BR · Sleeps 18 · Hot tub · Pool" },
-    { id: "the-birch", listingId: "",
+    { id: "the-birch", listingId: "68725ada8df7060012c68ab0",
       name: "The Birch", bedrooms: 13, guests: 32, baths: 11,
       nightlyFrom: 2300, minNights: 2, pets: "no", rating: 4.95, reviews: 71,
       city: "Dover, Vermont", g1: "#54687a", g2: "#26333e",
       href: "stays/the-birch.html",
       blurb: "13BR · Sleeps 32 · 2 min to lifts" },
-    { id: "the-mahogany", listingId: "",
+    { id: "the-mahogany", listingId: "68725a69d70161000fb43b07",
       name: "The Mahogany", bedrooms: 9, guests: 22, baths: 9.5,
       nightlyFrom: 1750, minNights: 2, pets: "allowed", rating: 4.94, reviews: 58,
       city: "Dover, Vermont", g1: "#7a4a3a", g2: "#37201a",
@@ -30,12 +32,14 @@
       blurb: "9BR · Sleeps 22 · Hot tub · Pool" }
   ];
 
-  const workerBase = (window.TC_WORKER_BASE || "").replace(/\/$/, "");
+  const workerBase = (window.TC_WORKER_BASE || DEFAULT_WORKER_BASE || "").replace(/\/$/, "");
   const endpoints = {
     listings: "/api/listings",
     availability: "/api/availability",
+    calendar: "/api/calendar",
     quote: "/api/quote",
-    book: "/api/book"
+    book: "/api/book",
+    config: "/config"
   };
 
   window.TC = Object.assign(window.TC || {}, {
