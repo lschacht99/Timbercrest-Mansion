@@ -27,7 +27,18 @@
     <div class="hidden md:block">
       <a href="booking.html?event=1" class="btn btn-primary" style="padding:.6rem 1.25rem;border-radius:99px;text-decoration:none">Plan a group stay</a>
     </div>
-    <a href="booking.html" class="md:hidden btn btn-primary" style="padding:.5rem 1rem;border-radius:99px;font-size:.85rem;text-decoration:none">Book</a>
+    <button class="mobile-menu-toggle md:hidden" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+      <span class="mobile-menu-toggle__bar"></span>
+      <span class="mobile-menu-toggle__bar"></span>
+      <span class="mobile-menu-toggle__bar"></span>
+    </button>
+    <nav id="mobile-menu" class="mobile-menu md:hidden" aria-label="Mobile navigation">
+      <a href="index.html">Stays</a>
+      <a href="concept.html">The concept</a>
+      <a href="events.html">Events &amp; weddings</a>
+      <a href="area.html">The area</a>
+      <a href="booking.html">Booking</a>
+    </nav>
   </div>
 </header>
 <main class="max-w-6xl mx-auto px-4 sm:px-8 py-6 pb-40 lg:pb-16" id="booking-root"></main>
