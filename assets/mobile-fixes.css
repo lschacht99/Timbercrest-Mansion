@@ -13,6 +13,27 @@
     margin-bottom: 1.35rem;
   }
 
+  /* Keep the property choices as separate cards/cases, not a vertical feed. */
+  #booking-root .bk-props {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: .6rem !important;
+  }
+
+  #booking-root .bk-prop {
+    min-width: 0;
+    padding: .58rem;
+  }
+
+  #booking-root .bk-prop-row {
+    gap: .35rem;
+  }
+
+  #booking-root .bk-prop small,
+  #booking-root .bk-prop .check {
+    font-size: .72rem;
+  }
+
   #booking-root .bk-dates {
     grid-template-columns: 1fr !important;
     gap: .65rem;
@@ -63,11 +84,5 @@
   #booking-root .line span:last-child {
     flex: 0 0 auto;
     text-align: right;
-  }
-}
-
-@media (max-width: 380px) {
-  #booking-root .bk-props {
-    grid-template-columns: 1fr;
   }
 }
