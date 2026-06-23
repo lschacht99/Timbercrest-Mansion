@@ -366,6 +366,44 @@
 })();
 
   // ---- Mobile menu ----
+  (function () {
+    const menuButton = document.querySelector(".mobile-menu-toggle");
+    const mobileMenu = document.getElementById("mobile-menu");
+
+    if (!menuButton || !mobileMenu) return;
+
+    function setMenuOpen(isOpen) {
+      menuButton.classList.toggle("is-open", isOpen);
+      mobileMenu.classList.toggle("is-open", isOpen);
+      menuButton.setAttribute("aria-expanded", String(isOpen));
+      menuButton.setAttribute("aria-label", isOpen ? "Close menu" : "Open menu");
+    }
+
+    function toggleMenu() {
+      setMenuOpen(menuButton.getAttribute("aria-expanded") !== "true");
+    }
+
+    menuButton.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMenu();
+    });
+
+    mobileMenu.addEventListener("click", function (e) {
+      if (e.target.closest("a")) setMenuOpen(false);
+    });
+
+    document.addEventListener("click", function (e) {
+      if (menuButton.getAttribute("aria-expanded") !== "true") return;
+      if (e.target.closest(".mobile-menu") || e.target.closest(".mobile-menu-toggle")) return;
+      setMenuOpen(false);
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") setMenuOpen(false);
+    });
+  })();
+
   document.addEventListener("click", function (e) {
     const t = e.target.closest("[data-toggle]");
     if (t) {

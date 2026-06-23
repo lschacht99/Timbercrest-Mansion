@@ -457,3 +457,89 @@ header .btn-primary {
     display: none !important;
   }
 }
+
+/* ============================================================
+   Mobile header menu
+   ============================================================ */
+.mobile-menu-toggle {
+  width: 2.75rem;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: .28rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .2s, border-color .2s, box-shadow .2s, transform .12s;
+}
+.mobile-menu-toggle:hover,
+.mobile-menu-toggle.is-open {
+  background: var(--cream);
+  border-color: #d6d3d1;
+  box-shadow: 0 2px 10px rgba(0,0,0,.08);
+}
+.mobile-menu-toggle:active { transform: scale(.96); }
+.mobile-menu-toggle__bar {
+  display: block;
+  width: 1.15rem;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transition: transform .2s ease, opacity .2s ease;
+}
+.mobile-menu-toggle.is-open .mobile-menu-toggle__bar:nth-child(1) {
+  transform: translateY(.38rem) rotate(45deg);
+}
+.mobile-menu-toggle.is-open .mobile-menu-toggle__bar:nth-child(2) { opacity: 0; }
+.mobile-menu-toggle.is-open .mobile-menu-toggle__bar:nth-child(3) {
+  transform: translateY(-.38rem) rotate(-45deg);
+}
+.mobile-menu {
+  position: absolute;
+  top: calc(100% + .75rem);
+  left: 1rem;
+  right: 1rem;
+  z-index: 45;
+  padding: .65rem;
+  background: rgba(255,255,255,.98);
+  border: 1px solid var(--line);
+  border-radius: 1.15rem;
+  box-shadow: 0 18px 45px rgba(0,0,0,.16);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-.75rem);
+  transition: opacity .2s ease, transform .2s cubic-bezier(.2,.8,.2,1);
+}
+.mobile-menu.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.mobile-menu a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .9rem 1rem;
+  border-radius: .85rem;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+.mobile-menu a:hover { background: var(--cream); }
+.mobile-menu a:last-child {
+  margin-top: .25rem;
+  background: var(--ink);
+  color: #fff;
+  justify-content: center;
+}
+.mobile-menu a:last-child:hover { background: #44403c; }
+@media (min-width: 768px) {
+  .mobile-menu,
+  .mobile-menu-toggle { display: none !important; }
+}
+@media (max-width: 767px) {
+  .mobile-menu-toggle { display: inline-flex; }
+}
